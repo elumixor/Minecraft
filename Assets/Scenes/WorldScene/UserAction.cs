@@ -14,18 +14,20 @@ namespace Scenes.WorldScene {
         private void Update() {
             // check for touch
             if (Input.GetMouseButtonDown(0)) {
-                var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-
+                var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
                 if (Physics.Raycast(ray, out var hit)) {
                     var objectHit = hit.transform;
 
-                    var newBlockPosition = hit.transform.position + hit.normal;
-//                    var newBlockRotation = hit.transform.rotation;
-
                     if (objectHit.GetComponent<IBuildable>() is var buildable)
-                        buildable.CreateBlock(newBlockPosition, blockSelector.selectedType);
+                        buildable.CreateBlock(hit.transform.position + hit.normal, blockSelector.selectedType);
+                }
+            } else if (Input.GetMouseButtonDown(1)) {
+                var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
+                if (Physics.Raycast(ray, out var hit)) {
+                    var objectHit = hit.transform;
 
-                    // Do something with the object that was hit by the raycast.
+                    if (objectHit.GetComponent<IDestructible>() is MonoBehaviour destructible)
+                        Destroy(destructible.gameObject);
                 }
             }
         }

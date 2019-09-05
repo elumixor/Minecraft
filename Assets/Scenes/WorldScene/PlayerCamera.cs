@@ -39,17 +39,20 @@ namespace Scenes.WorldScene {
 
             if (Input.GetKey(KeyCode.W))
                 transform1.Translate(new Vector3(0, 0, translateSpeed * Time.deltaTime));
-            else if (Input.GetKey(KeyCode.S))
+            if (Input.GetKey(KeyCode.S))
                 transform1.Translate(new Vector3(0, 0, -translateSpeed * Time.deltaTime));
-            else if (Input.GetKey(KeyCode.A))
+            if (Input.GetKey(KeyCode.A))
                 transform1.Translate(new Vector3(-translateSpeed * Time.deltaTime, 0, 0));
-            else if (Input.GetKey(KeyCode.D))
+            if (Input.GetKey(KeyCode.D))
                 transform1.Translate(new Vector3(translateSpeed * Time.deltaTime, 0, 0));
-            else if (Input.GetKey(KeyCode.Z)) {
+
+            if (Input.GetKey(KeyCode.Z)) {
                 var transformPosition = transform1.position;
                 transformPosition.y += translateSpeed * Time.deltaTime;
                 transform1.position = transformPosition;
-            } else if (Input.GetKey(KeyCode.X)) {
+            }
+
+            if (Input.GetKey(KeyCode.X)) {
                 var transformPosition = transform.position;
                 transformPosition.y -= translateSpeed * Time.deltaTime;
                 transform1.position = transformPosition;
