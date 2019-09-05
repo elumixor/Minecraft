@@ -14,5 +14,12 @@ namespace Scenes.WorldScene.Block {
         /// </summary>
         [Range(0, 10)]
         public float durability;
+
+        public void Deconstruct(out Material outMaterial) => outMaterial = material;
+
+        public void Deconstruct(out Material outMaterial, out float outDurability) {
+            outMaterial = material;
+            outDurability = durability;
+        }
     }
 }
