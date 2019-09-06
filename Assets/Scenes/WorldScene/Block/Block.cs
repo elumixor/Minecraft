@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Block {
@@ -5,6 +6,7 @@ namespace Scenes.WorldScene.Block {
     public class Block : MonoBehaviour, IBuildable, IDestructible {
         [SerializeField] private BlockType blockType;
         [SerializeField] private MeshRenderer meshRenderer;
+        [SerializeField] private Vector3Int position;
 
         public BlockType BlockType {
             get => blockType;
@@ -26,6 +28,10 @@ namespace Scenes.WorldScene.Block {
         /// </summary>
         private void OnValidate() {
             BlockType = blockType;
+            meshRenderer.sharedMaterial = blockType.BlockData().material;
+
+            if (position.y < 0) position.y = 0;
+            transform.position = new Vector3(position.x, position.y, position.z) * Settings.GridUnitWidth;
         }
         public float Durability => blockType.BlockData().durability;
         public GameObject GameObject => gameObject;

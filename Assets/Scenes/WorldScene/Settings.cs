@@ -17,13 +17,14 @@ namespace Scenes.WorldScene {
         public static Block.Block BlockPrefab => Instance.blockPrefab;
         public static BlockDataContainer BlockDataContainer => Instance.blockDataContainer;
         public static Transform BlocksContainer => Instance.blocksContainer;
+        public static float GridUnitWidth => Instance.gridUnitWidth;
 
         private void OnValidate() {
             if (floor == null) return;
 
             var tr = floor.transform;
             var transformPosition = tr.position;
-            transformPosition.y = -gridUnitWidth * .5f - tr.localScale.y *.5f;
+            transformPosition.y = -gridUnitWidth * .5f;
             tr.position = transformPosition;
         }
     }
