@@ -3,7 +3,7 @@ using UnityEngine.PlayerLoop;
 
 namespace Scenes.WorldScene.Floor {
     [ExecuteInEditMode]
-    public class Floor : MonoBehaviour {
+    public class Floor : MonoBehaviour, IBuildable {
         [SerializeField] private Transform cameraTransform;
         [SerializeField] private Vector3 offset;
 

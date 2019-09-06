@@ -5,6 +5,8 @@ namespace Scenes.WorldScene {
     public class PlayerCamera : MonoBehaviour {
         private float pitch;
         private float yaw;
+        [SerializeField] private Transform playerCamera;
+
 
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private float translateSpeed = 10f;
@@ -18,7 +20,6 @@ namespace Scenes.WorldScene {
 
 
         private void LateUpdate() {
-            var transform1 = transform;
             pitch -= rotationSpeed * Input.GetAxis("Mouse Y");
             yaw += rotationSpeed * Input.GetAxis("Mouse X");
 
@@ -35,7 +36,13 @@ namespace Scenes.WorldScene {
             }
 
             // Set orientation:
-            transform1.eulerAngles = new Vector3(pitch, yaw, 0f);
+            playerCamera.eulerAngles = new Vector3(pitch, yaw, 0f);
+
+            var transform1 = transform;
+
+            var oldRotation = transform1.eulerAngles;
+
+            transform1.eulerAngles = playerCamera.eulerAngles;
 
             if (Input.GetKey(KeyCode.W))
                 transform1.Translate(new Vector3(0, 0, translateSpeed * Time.deltaTime));
@@ -57,6 +64,8 @@ namespace Scenes.WorldScene {
                 transformPosition.y -= translateSpeed * Time.deltaTime;
                 transform1.position = transformPosition;
             }
+
+            transform1.eulerAngles = oldRotation;
         }
     }
 }

@@ -9,12 +9,20 @@ namespace Scenes.WorldScene.Block {
         [SerializeField] private Vector3Int position;
 
         public BlockType BlockType {
-            get => blockType;
             set {
                 if (value != blockType) {
                     blockType = value;
                     meshRenderer.sharedMaterial = blockType.BlockData().material;
                 }
+            }
+        }
+
+        public Vector3Int Position {
+            get => position;
+            set {
+                position = value;
+                if (position.y < 0) position.y = 0;
+                transform.position = new Vector3(position.x, position.y, position.z) * Settings.GridUnitWidth;
             }
         }
 
@@ -27,7 +35,7 @@ namespace Scenes.WorldScene.Block {
         /// Update block material when block type has changed in editor
         /// </summary>
         private void OnValidate() {
-            BlockType = blockType;
+            Debug.Log("on validate");
             meshRenderer.sharedMaterial = blockType.BlockData().material;
 
             if (position.y < 0) position.y = 0;

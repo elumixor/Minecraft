@@ -1,7 +1,10 @@
+//using JetBrains.Annotations;
+
 using JetBrains.Annotations;
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
 using Shared;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
@@ -49,12 +52,23 @@ namespace Scenes.WorldScene {
             if (Physics.Raycast(ray1, out var hit1)) {
                 var objectHit = hit1.transform;
 
-                if (objectHit.GetComponent<IBuildable>() != null && selectedDestructible == null) {
-                    previewCube.transform.position = hit1.transform.position + hit1.normal;
-                    previewCube.GetComponent<Renderer>().enabled = true;
-                    var opacity = previewCube.GetComponent<Renderer>().sharedMaterial.color.a;
-                    previewCube.GetComponent<Renderer>().sharedMaterial.color =
-                        blockSelector.selectedType.BlockData().material.color.SetAlpha(opacity);
+                if (selectedDestructible == null) {
+                    Debug.Log(objectHit);
+                    if (objectHit.GetComponent<Block.Block>() != null) {
+                        previewCube.transform.position = hit1.transform.position + hit1.normal;
+                        previewCube.GetComponent<Renderer>().enabled = true;
+                        var opacity = previewCube.GetComponent<Renderer>().sharedMaterial.color.a;
+                        previewCube.GetComponent<Renderer>().sharedMaterial.color =
+                            blockSelector.selectedType.BlockData().material.color.SetAlpha(opacity);
+                    } else if (objectHit.GetComponent<Floor.Floor>() != null) {
+                        var hitPoint = Vector3Int.RoundToInt(hit1.point);
+                        hitPoint.y = 0;
+                        previewCube.transform.position = hitPoint;
+                        previewCube.GetComponent<Renderer>().enabled = true;
+                        var opacity = previewCube.GetComponent<Renderer>().sharedMaterial.color.a;
+                        previewCube.GetComponent<Renderer>().sharedMaterial.color =
+                            blockSelector.selectedType.BlockData().material.color.SetAlpha(opacity);
+                    }
                 }
             }
 
@@ -62,9 +76,18 @@ namespace Scenes.WorldScene {
                 var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
                 if (Physics.Raycast(ray, out var hit)) {
                     var objectHit = hit.transform;
+                    var block = objectHit.GetComponent<Block.Block>();
+                    if (block != null)
+                        block.CreateBlock(block.Position + Vector3Int.RoundToInt(hit.normal),
+                            blockSelector.selectedType);
+                    else {
+                        var floor = objectHit.GetComponent<Floor.Floor>();
+                        if (floor != null)
+                            floor.CreateBlock(Vector3Int.RoundToInt(hit.point), blockSelector.selectedType);
+                    }
 
-                    if (objectHit.GetComponent<IBuildable>() is var buildable)
-                        buildable.CreateBlock(hit.transform.position + hit.normal, blockSelector.selectedType);
+//                    var buildable = objectHit.GetComponent<IBuildable>();
+//                    Debug.Log(hit.normal);
                 }
             } else if (Input.GetMouseButtonDown(1)) {
                 var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
