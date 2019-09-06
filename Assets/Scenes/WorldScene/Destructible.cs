@@ -1,11 +1,13 @@
 using UnityEditor;
+using UnityEngine;
 
 namespace Scenes.WorldScene {
-    internal interface IDestructible {
-
+    public interface IDestructible {
+        float Durability { get; }
+        GameObject GameObject { get; }
     }
 
-    internal static class DestructibleExtensions {
-
+    public static class DestructibleExtensions {
+        public static void Destroy(this IDestructible destructible) => Object.Destroy(destructible.GameObject);
     }
 }

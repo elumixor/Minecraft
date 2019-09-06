@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   values:
   - material: {fileID: 2100000, guid: 2ef4d024924b20a42afdf94c7dbef50f, type: 2}
-    durability: 2.51
+    durability: 0.572
   - material: {fileID: 2100000, guid: ecae0a6ca3f34f845b2a1e78742b6dd1, type: 2}
-    durability: 10
+    durability: 1.701
   - material: {fileID: 2100000, guid: 1d7cbaafb43028047a950ee1551b0784, type: 2}
     durability: 0
   - material: {fileID: 2100000, guid: e7921cd2c9b90ce46acba94993ff1499, type: 2}
-    durability: 6.79
+    durability: 1.085

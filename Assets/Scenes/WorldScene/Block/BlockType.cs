@@ -4,7 +4,10 @@ namespace Scenes.WorldScene.Block {
         Metal,
         Water,
         Wood
-
         // define additional enum types below
+    }
+
+    public static class BlockTypeExtensions {
+        public static BlockData BlockData(this BlockType blockType) => Settings.BlockDataContainer[blockType];
     }
 }

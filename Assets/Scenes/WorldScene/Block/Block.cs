@@ -1,26 +1,17 @@
-using System;
-using Shared;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Block {
     [RequireComponent(typeof(MeshRenderer))]
     public class Block : MonoBehaviour, IBuildable, IDestructible {
         [SerializeField] private BlockType blockType;
-
-        // todo: this should be unmodifiable from inspector
-        [SerializeField] private BlockData blockData;
-
         [SerializeField] private MeshRenderer meshRenderer;
 
-
-        public BlockData BlockData => blockData;
         public BlockType BlockType {
             get => blockType;
             set {
                 if (value != blockType) {
                     blockType = value;
-                    blockData = Settings.BlockDataContainer[blockType];
-                    meshRenderer.sharedMaterial = blockData.material;
+                    meshRenderer.sharedMaterial = blockType.BlockData().material;
                 }
             }
         }
@@ -36,5 +27,7 @@ namespace Scenes.WorldScene.Block {
         private void OnValidate() {
             BlockType = blockType;
         }
+        public float Durability => blockType.BlockData().durability;
+        public GameObject GameObject => gameObject;
     }
 }
