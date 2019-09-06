@@ -1,7 +1,28 @@
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 namespace Scenes.WorldScene.Floor {
-    internal class Floor : MonoBehaviour {
+    [ExecuteInEditMode]
+    public class Floor : MonoBehaviour {
+        [SerializeField] private Transform cameraTransform;
+        [SerializeField] private Vector3 offset;
 
+
+        private void Update() {
+            if (cameraTransform == null) return;
+
+            var tr = transform;
+
+            var pos = tr.position;
+            var cameraPos = cameraTransform.position  + offset;
+            pos.x = cameraPos.x;
+            pos.z = cameraPos.z;
+            tr.position = pos;
+
+            var rot = tr.rotation.eulerAngles;
+            var cameraRot = cameraTransform.rotation.eulerAngles;
+            rot.y = cameraRot.y;
+            tr.rotation = Quaternion.Euler(rot);
+        }
     }
 }

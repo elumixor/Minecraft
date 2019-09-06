@@ -58,7 +58,7 @@ namespace Scenes.WorldScene {
                 }
             }
 
-            if (Input.GetMouseButtonDown(0)) {
+            if (Input.GetMouseButtonDown(0) && selectedDestructible == null) {
                 var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
                 if (Physics.Raycast(ray, out var hit)) {
                     var objectHit = hit.transform;
@@ -67,7 +67,6 @@ namespace Scenes.WorldScene {
                         buildable.CreateBlock(hit.transform.position + hit.normal, blockSelector.selectedType);
                 }
             } else if (Input.GetMouseButtonDown(1)) {
-                Debug.Log("down");
                 var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
                 if (Physics.Raycast(ray, out var hit)) {
                     var objectHit = hit.transform;
