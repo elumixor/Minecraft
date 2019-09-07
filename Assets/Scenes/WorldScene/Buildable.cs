@@ -1,17 +1,22 @@
 using Scenes.WorldScene.Block;
+using Scenes.WorldScene.BlockSelection;
 using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene {
-    public interface IBuildable { }
+    public interface IBuildable {
+        Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal);
+    }
 
     public static class BuildableExtensions {
-        public static void CreateBlock(this IBuildable buildable, Vector3Int position, BlockType selectedType) {
-            var instance = (Block.Block)PrefabUtility.InstantiatePrefab(Settings.BlockPrefab);
+        public static void CreateBlock(this Vector3Int blockLocation) => blockLocation.CreateBlock(BlockSelector.SelectedType); 
+
+        public static void CreateBlock(this Vector3Int blockLocation, BlockType selectedType) {
+            var instance = (Block.Block) PrefabUtility.InstantiatePrefab(Settings.BlockPrefab);
             var transform = instance.transform;
             transform.parent = Settings.BlocksContainer;
             instance.BlockType = selectedType;
-            instance.Position = position;
+            instance.Position = blockLocation;
         }
     }
 }

@@ -3,12 +3,13 @@ using UnityEngine;
 
 namespace Scenes.WorldScene.Block {
     [RequireComponent(typeof(MeshRenderer))]
-    public class Block : MonoBehaviour, IBuildable, IDestructible {
+    public class Block : MonoBehaviour, IBuildable {
         [SerializeField] private BlockType blockType;
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private Vector3Int position;
 
         public BlockType BlockType {
+            get => blockType;
             set {
                 if (value != blockType) {
                     blockType = value;
@@ -26,22 +27,10 @@ namespace Scenes.WorldScene.Block {
             }
         }
 
-        private void Awake() => meshRenderer = GetComponent<MeshRenderer>();
-
+        private void Awake() => Reset();
         private void Reset() => meshRenderer = GetComponent<MeshRenderer>();
 
-        // todo: this should only run if blockType has changed
-        /// <summary>
-        /// Update block material when block type has changed in editor
-        /// </summary>
-        private void OnValidate() {
-            Debug.Log("on validate");
-            meshRenderer.sharedMaterial = blockType.BlockData().material;
-
-            if (position.y < 0) position.y = 0;
-            transform.position = new Vector3(position.x, position.y, position.z) * Settings.GridUnitWidth;
-        }
-        public float Durability => blockType.BlockData().durability;
-        public GameObject GameObject => gameObject;
+        public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) =>
+            position + Vector3Int.RoundToInt(hitNormal);
     }
 }

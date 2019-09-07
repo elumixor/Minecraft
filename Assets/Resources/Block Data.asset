@@ -18,6 +18,6 @@ MonoBehaviour:
   - material: {fileID: 2100000, guid: ecae0a6ca3f34f845b2a1e78742b6dd1, type: 2}
     durability: 1.701
   - material: {fileID: 2100000, guid: 1d7cbaafb43028047a950ee1551b0784, type: 2}
-    durability: 0
+    durability: 0.1
   - material: {fileID: 2100000, guid: e7921cd2c9b90ce46acba94993ff1499, type: 2}
     durability: 1.085

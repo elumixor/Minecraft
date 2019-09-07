@@ -22,8 +22,8 @@ namespace Scenes.WorldScene.Map {
             for (var x = 0; x < chunkSize; x++)
             for (var y = 0; y < chunkSize; y++)
             for (var z = 0; z < chunkSize; z++) {
-                var value = rand.Next(-1, values.Length);
-                currentChunk[x, y, z] = value == -1 ? null : (BlockType?) value;
+                var value = rand.Next(-5, values.Length);
+                currentChunk[x, y, z] = value < 0 ? null : (BlockType?) value;
             }
         }
 

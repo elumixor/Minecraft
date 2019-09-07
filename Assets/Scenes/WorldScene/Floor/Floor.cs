@@ -14,7 +14,7 @@ namespace Scenes.WorldScene.Floor {
             var tr = transform;
 
             var pos = tr.position;
-            var cameraPos = cameraTransform.position  + offset;
+            var cameraPos = cameraTransform.position + offset;
             pos.x = cameraPos.x;
             pos.z = cameraPos.z;
             tr.position = pos;
@@ -23,6 +23,12 @@ namespace Scenes.WorldScene.Floor {
             var cameraRot = cameraTransform.rotation.eulerAngles;
             rot.y = cameraRot.y;
             tr.rotation = Quaternion.Euler(rot);
+        }
+
+        public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) {
+            var p = Vector3Int.RoundToInt(hitPoint);
+            p.y = 0;
+            return p;
         }
     }
 }

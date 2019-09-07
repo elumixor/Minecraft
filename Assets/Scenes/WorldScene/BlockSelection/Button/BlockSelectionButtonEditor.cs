@@ -10,6 +10,7 @@ namespace Scenes.WorldScene.BlockSelection.Button {
     public class BlockSelectionButtonEditor : Editor {
         private BlockSelectionButton button;
         private SerializedProperty blockType;
+
         private void OnEnable() {
             button = (BlockSelectionButton) target;
             blockType = serializedObject.FindProperty("blockType");
@@ -18,14 +19,11 @@ namespace Scenes.WorldScene.BlockSelection.Button {
         public override void OnInspectorGUI() {
             serializedObject.Update();
             base.OnInspectorGUI();
-
-//            EditorGUILayout.PropertyField(blockType);
-
-            var settings = (BlockDataContainer)EditorGUILayout.ObjectField("Set color from settings",
+            
+            var settings = (BlockDataContainer) EditorGUILayout.ObjectField("Set color from settings",
                 null, typeof(BlockDataContainer), false);
 
-            if (settings != null)
-                button.GetComponent<Image>().color = settings[(BlockType) blockType.enumValueIndex].material.color;
+            if (settings != null) button.GetComponent<Image>().color = ((BlockType) blockType.enumValueIndex).BlockData().material.color;
 
             serializedObject.ApplyModifiedProperties();
         }

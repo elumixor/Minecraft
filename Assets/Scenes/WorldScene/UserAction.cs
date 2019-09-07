@@ -11,108 +11,80 @@ using UnityEngine.UI;
 
 namespace Scenes.WorldScene {
     // todo: should be a singleton
-    public class UserAction : MonoBehaviour {
-        [SerializeField] private BlockSelector blockSelector;
-        private Camera mainCamera;
-
-        private void Awake() {
-            mainCamera = Camera.main;
-        }
-
+    public class UserAction : SingletonBehaviour<UserAction> {
+        [SerializeField] private GameObject previewCubeObject;
         [SerializeField] private Image cursor;
         [SerializeField] private Image destroyCursor;
 
-        [CanBeNull] private IDestructible selectedDestructible;
-        private float destructionEndTime;
-        private float destructionStartTime;
+        private Camera mainCamera;
+        private Vector2 cursorsDifference;
+        private (Block.Block block, (float start, float end) time)? destruction;
+        private (Renderer renderer, Transform transform, float opacity) previewCube;
 
-        [SerializeField] private GameObject previewCube;
+        protected override void Awake() {
+            mainCamera = Camera.main;
+
+            var bigRect = destroyCursor.GetComponent<RectTransform>().rect;
+            var smallRect = cursor.GetComponent<RectTransform>().rect;
+            var widthDiff = bigRect.width / smallRect.width;
+            var heightDiff = bigRect.height / smallRect.height;
+
+            cursorsDifference = new Vector2(widthDiff - 1f, heightDiff - 1f);
+
+            var previewRenderer = previewCubeObject.GetComponent<Renderer>();
+            previewCube = (previewRenderer, previewCubeObject.transform, previewRenderer.sharedMaterial.color.a);
+        }
+
+        private void DestroySelectedBlock(Component block) {
+            Destroy(block.gameObject);
+            destruction = null;
+            destroyCursor.SetColorAlpha(0f);
+            cursor.transform.localScale = Vector3.one;
+        }
+
 
         private void Update() {
-            if (selectedDestructible != null) {
+            var destroyingStarted = destruction != null;
+
+            // if destroying started, update timer and conditionally destroy block
+            if (destroyingStarted) {
                 var now = Time.time;
-                var bigRect = destroyCursor.GetComponent<RectTransform>().rect;
-                var smallRect = cursor.GetComponent<RectTransform>().rect;
-                var widthDiff = bigRect.width / smallRect.width;
-                var heightDiff = bigRect.height / smallRect.height;
-
-                cursor.transform.localScale = (now - destructionStartTime) / (destructionEndTime - destructionStartTime)
-                                              * (new Vector2(widthDiff, heightDiff) - Vector2.one) + Vector2.one;
-                if (now >= destructionEndTime) {
-                    selectedDestructible.Destroy();
-                    selectedDestructible = null;
-                    destroyCursor.SetColorAlpha(0f);
-                    cursor.transform.localScale = Vector3.one;
-                }
+                var (block, (start, end)) = destruction.Value;
+                cursor.transform.localScale = (now - start) / (end - start) * cursorsDifference + Vector2.one;
+                if (now >= end) DestroySelectedBlock(block);
             }
 
-            previewCube.GetComponent<Renderer>().enabled = false;
+            previewCube.renderer.enabled = false;
 
-            var ray1 = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
-            if (Physics.Raycast(ray1, out var hit1)) {
-                var objectHit = hit1.transform;
+            if (!Physics.Raycast(mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0)), out var hit)) return;
 
-                if (selectedDestructible == null) {
-                    Debug.Log(objectHit);
-                    if (objectHit.GetComponent<Block.Block>() != null) {
-                        previewCube.transform.position = hit1.transform.position + hit1.normal;
-                        previewCube.GetComponent<Renderer>().enabled = true;
-                        var opacity = previewCube.GetComponent<Renderer>().sharedMaterial.color.a;
-                        previewCube.GetComponent<Renderer>().sharedMaterial.color =
-                            blockSelector.selectedType.BlockData().material.color.SetAlpha(opacity);
-                    } else if (objectHit.GetComponent<Floor.Floor>() != null) {
-                        var hitPoint = Vector3Int.RoundToInt(hit1.point);
-                        hitPoint.y = 0;
-                        previewCube.transform.position = hitPoint;
-                        previewCube.GetComponent<Renderer>().enabled = true;
-                        var opacity = previewCube.GetComponent<Renderer>().sharedMaterial.color.a;
-                        previewCube.GetComponent<Renderer>().sharedMaterial.color =
-                            blockSelector.selectedType.BlockData().material.color.SetAlpha(opacity);
+            var objectHit = hit.transform;
+            var notDestroying = !BlockSelector.IsDestroying;
+
+            if (!destroyingStarted) {
+                if (!(objectHit.GetComponent<IBuildable>() is var buildable) || buildable == null) return;
+
+                var buildPosition = buildable.GetBuildPosition(hit.point, hit.normal);
+
+                if (notDestroying) {
+                    previewCube.transform.position = buildPosition;
+                    previewCube.renderer.material.color =
+                        BlockSelector.SelectedType.BlockData().material.color.SetAlpha(previewCube.opacity);
+                    previewCube.renderer.enabled = true;
+                }
+
+                if (Input.GetMouseButtonDown(0)) {
+                    if (notDestroying) buildPosition.CreateBlock();
+                    else if (objectHit.GetComponent<Block.Block>() is var block && block != null) {
+                        var now = Time.time;
+                        destruction = (block, (now, now + block.BlockType.BlockData().durability));
+                        destroyCursor.SetColorAlpha(.5f);
                     }
                 }
-            }
-
-            if (Input.GetMouseButtonDown(0) && selectedDestructible == null) {
-                var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
-                if (Physics.Raycast(ray, out var hit)) {
-                    var objectHit = hit.transform;
-                    var block = objectHit.GetComponent<Block.Block>();
-                    if (block != null)
-                        block.CreateBlock(block.Position + Vector3Int.RoundToInt(hit.normal),
-                            blockSelector.selectedType);
-                    else {
-                        var floor = objectHit.GetComponent<Floor.Floor>();
-                        if (floor != null)
-                            floor.CreateBlock(Vector3Int.RoundToInt(hit.point), blockSelector.selectedType);
-                    }
-
-//                    var buildable = objectHit.GetComponent<IBuildable>();
-//                    Debug.Log(hit.normal);
-                }
-            } else if (Input.GetMouseButtonDown(1)) {
-                var ray = mainCamera.ViewportPointToRay(new Vector3(0.5F, 0.5F, 0));
-                if (Physics.Raycast(ray, out var hit)) {
-                    var objectHit = hit.transform;
-
-                    selectedDestructible = objectHit.GetComponent<IDestructible>();
-                    if (selectedDestructible != null) {
-                        var durability = selectedDestructible.Durability;
-                        if (durability < 1e-5f) {
-                            selectedDestructible.Destroy();
-                            selectedDestructible = null;
-                        } else {
-                            destructionStartTime = Time.time;
-                            destructionEndTime = destructionStartTime + selectedDestructible.Durability;
-                            destroyCursor.SetColorAlpha(.5f);
-                        }
-                    }
-                }
-            } else if (Input.GetMouseButtonUp(1)) {
-                if (selectedDestructible != null) {
-                    selectedDestructible = null;
-                    destroyCursor.SetColorAlpha(0f);
-                    cursor.transform.localScale = Vector3.one;
-                }
+            } else if (Input.GetMouseButtonUp(0)) {
+                destruction = null;
+                destroyCursor.SetColorAlpha(0f);
+                cursor.transform.localScale = Vector3.one;
             }
         }
     }
