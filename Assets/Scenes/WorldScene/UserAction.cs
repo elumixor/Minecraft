@@ -3,6 +3,7 @@
 using JetBrains.Annotations;
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
+using Scenes.WorldScene.Map;
 using Shared;
 using UnityEditor;
 using UnityEngine;
@@ -35,11 +36,12 @@ namespace Scenes.WorldScene {
             previewCube = (previewRenderer, previewCubeObject.transform, previewRenderer.sharedMaterial.color.a);
         }
 
-        private void DestroySelectedBlock(Component block) {
+        private void DestroySelectedBlock(Block.Block block) {
             Destroy(block.gameObject);
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
+            MapManager.Remove(block.Position);
         }
 
 
@@ -74,7 +76,7 @@ namespace Scenes.WorldScene {
                 }
 
                 if (Input.GetMouseButtonDown(0)) {
-                    if (notDestroying) buildPosition.CreateBlock();
+                    if (notDestroying) Settings.CreateBlockInstance(BlockSelector.SelectedType, buildPosition);
                     else if (objectHit.GetComponent<Block.Block>() is var block && block != null) {
                         var now = Time.time;
                         destruction = (block, (now, now + block.BlockType.BlockData().durability));

@@ -1,5 +1,6 @@
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
+using Scenes.WorldScene.Map;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ namespace Scenes.WorldScene {
             transform.parent = Settings.BlocksContainer;
             instance.BlockType = selectedType;
             instance.Position = blockLocation;
+            MapManager.Set(selectedType, blockLocation);
         }
     }
 }

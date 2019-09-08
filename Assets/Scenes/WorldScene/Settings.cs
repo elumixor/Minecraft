@@ -1,6 +1,8 @@
 using System;
+using Scenes.WorldScene.Block;
 using Scenes.WorldScene.Block.BlockDataContainer;
 using Shared;
+using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene {
@@ -15,6 +17,15 @@ namespace Scenes.WorldScene {
         public static Transform BlocksContainer => Instance.blocksContainer;
         public static float GridUnitWidth => Instance.gridUnitWidth;
 
+        public static Block.Block CreateBlockInstance(BlockType blockType = default, Vector3Int position = default) {
+            var instance = (Block.Block) PrefabUtility.InstantiatePrefab(BlockPrefab);
+            var transform = instance.transform;
+            transform.parent = BlocksContainer;
+            instance.BlockType = blockType;
+            instance.Position = position;
+            return instance;
+        }
+        
         private void OnValidate() {
             if (floor == null) return;
 

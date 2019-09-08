@@ -1,3 +1,5 @@
+using System;
+using Scenes.WorldScene.Map;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,7 +29,18 @@ namespace Scenes.WorldScene.Block {
             }
         }
 
-        private void Awake() => Reset();
+        private void Awake() {
+            Reset();
+        }
+
+        private void Start() {
+            MapManager.Set(blockType, position);
+        }
+
+        private void OnDestroy() {
+            MapManager.Remove(position);
+        }
+
         private void Reset() => meshRenderer = GetComponent<MeshRenderer>();
 
         public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) =>

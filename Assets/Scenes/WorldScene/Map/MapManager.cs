@@ -1,61 +1,152 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Scenes.WorldScene.Block;
+using Scenes.WorldScene.BlockSelection;
+using Shared;
 using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Map {
-    public class MapManager : MonoBehaviour, IEnumerable<(BlockType? blockType, (int x, int y, int z))> {
-        [SerializeField] private BlockType?[,,] currentChunk;
-        [SerializeField, Range(10, 100)] private int chunkSize;
-        [SerializeField] private Transform blockContainer;
-        [SerializeField] private Block.Block blockPrefab;
+    public class MapManager : SingletonBehaviour<MapManager> {
+        [Serializable]
+        public struct BlockPosition {
+            public BlockType blockType;
 
-        /// <summary>
-        /// Generates new map chunk
-        /// </summary>
-        public void GenerateChunk() {
-            var rand = new System.Random();
-            currentChunk = new BlockType?[chunkSize, chunkSize, chunkSize];
-            var values = Enum.GetValues(typeof(BlockType));
-            for (var x = 0; x < chunkSize; x++)
-            for (var y = 0; y < chunkSize; y++)
-            for (var z = 0; z < chunkSize; z++) {
-                var value = rand.Next(-5, values.Length);
-                currentChunk[x, y, z] = value < 0 ? null : (BlockType?) value;
+            /// <summary>
+            /// Position index, that is i = z * blockSize^2 + y * blockSize + z
+            /// </summary>
+            [field: SerializeField]
+            public int Index { get; private set; }
+//
+//            [SerializeField] private int x;
+//            [SerializeField] private int y;
+//            [SerializeField] private int z;
+//
+//            public int X {
+//                get => x;
+//                set => x = value;
+//            }
+//
+//            public int Y {
+//                get => y;
+//                set => y = value;
+//            }
+//
+//            public int Z {
+//                get => z;
+//                set => z = value;
+//            }
+//
+//            public Vector3Int Position {
+//                get => new Vector3Int(x, y, z);
+//                set {
+//                    x = value.x;
+//                    y = value.y;
+//                    z = value.z;
+//                }
+//            }
+//
+//            public BlockType BlockType {
+//                get => blockType;
+//                set => blockType = value;
+//            }
+//
+//            public void Deconstruct(out BlockType outBlockType, out Vector3Int outPosition) {
+//                outBlockType = blockType;
+//                outPosition = Position;
+//            }
+
+            public void Deconstruct(out BlockType outBlockType, out int outI) {
+                outBlockType = blockType;
+                outI = Index;
             }
+//
+//            public void Deconstruct(out BlockType outBlockType, out int outX, out int outY, out int outZ) {
+//                outBlockType = blockType;
+//                outX = x;
+//                outY = y;
+//                outZ = z;
+//            }
+
+            /// <summary>
+            /// Implicit conversion from value tuple
+            /// </summary>
+            public static implicit operator BlockPosition((BlockType blockType, int i) valueTuple) =>
+                new BlockPosition {blockType = valueTuple.blockType, Index = valueTuple.i};
         }
 
-        public void CreateBlocks() {
-            IEnumerator Create() {
-                foreach (var (blockType, (x, y, z)) in this) {
-                    if (blockType == null) continue;
+        private const int BlockSize = 100;
+        private const int BlockSizeSquared = BlockSize * BlockSize;
 
-                    var block = (Block.Block) PrefabUtility.InstantiatePrefab(blockPrefab, blockContainer);
-                    block.Position = new Vector3Int(x, y, z);
-                    block.BlockType = (BlockType) blockType;
-                    yield return null;
+        [SerializeField] private List<BlockPosition> map = new List<BlockPosition>();
+
+        private void Reset() => Awake();
+
+        private static int ToPos(int x, int y, int z) => z * BlockSize * BlockSize + y * BlockSize + x;
+        private static int ToPos(Vector3Int pos) => ToPos(pos.x, pos.y, pos.z);
+        
+        private static (int x, int y, int z) FromPos(int i) {
+            var z = i / BlockSizeSquared;
+            var y = (i - z * BlockSizeSquared) / BlockSize;
+            var x = i - z * BlockSizeSquared - y * BlockSize;
+            return (x, y, z);
+        }
+
+        public static BlockType? Get(int i) {
+            foreach (var (blockType, outI) in Instance.map) {
+                if (outI == i) return blockType;
+                if (outI > i) return null;
+            }
+
+            return null;
+        }
+
+        public static BlockType? Get(int x, int y, int z) => Get(ToPos(x, y, z));
+
+        public static BlockType? Get(Vector3Int pos) => Get(ToPos(pos));
+        
+        public static void Set(BlockType blockType, int i) {
+            var map = Instance.map;
+
+            if (map.Count == 0) {
+                map.Add((blockType, i));
+                return;
+            }
+
+            for (var j = 0; j < map.Count; j++) {
+                var mapI = map[j].Index;
+                if (mapI == i) {
+                    map[j] = (blockType, i); return;
+                }
+
+                if (mapI < i) {
+                    map.Insert(j, (blockType, i));
+                    return;
                 }
             }
 
-            StartCoroutine(Create());
+            map.Add((blockType, i));
         }
 
-        private BlockType? this[int x, int y, int z] {
-            get => currentChunk[x, y, z];
-            set => currentChunk[x, y, z] = value;
-        }
+        public static void Set(BlockType blockType, int x, int y, int z) => Set(blockType, ToPos(x, y, z));
 
-        public IEnumerator<(BlockType? blockType, (int x, int y, int z))> GetEnumerator() {
-            for (var x = 0; x < chunkSize; x++)
-            for (var y = 0; y < chunkSize; y++)
-            for (var z = 0; z < chunkSize; z++) {
-                var value = currentChunk[x, y, z];
-                yield return (value, (x, y, z));
+        public static void Set(BlockType blockType, Vector3Int position) => Set(blockType, ToPos(position));
+
+
+        public static void Remove(int i) {
+            var instanceMap = Instance.map;
+            for (var index = 0; index < instanceMap.Count; index++) {
+                var blockPosition = instanceMap[index];
+                if (blockPosition.Index == i) {
+                    instanceMap.RemoveAt(index);
+                    return;
+                }
             }
         }
+        public static void Remove(int x, int y, int z) => Remove(ToPos(x, y, z));
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public static void Remove (Vector3Int position) => Remove(ToPos(position));
     }
 }
