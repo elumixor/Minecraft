@@ -1,7 +1,5 @@
-using System;
 using Scenes.WorldScene.Map;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 namespace Scenes.WorldScene {
     public class PlayerCamera : MonoBehaviour {
@@ -62,37 +60,30 @@ namespace Scenes.WorldScene {
 
             transform1.eulerAngles = oldRotation;
 
-            // Player is a sphere with radius of Settings.GridUnitWidth / 2
             var position = transform1.position;
             var playerGridPosition = Vector3Int.RoundToInt(position);
             var playerPosition = (Vector3) playerGridPosition * Settings.GridUnitWidth;
             var diff = position - playerPosition;
 
-            Debug.Log(diff);
-            Debug.Log($"position {playerGridPosition}");
-            Debug.Log($"+x {MapManager.Get(playerGridPosition + Vector3Int.right).HasValue}");
-            Debug.Log($"-x {MapManager.Get(playerGridPosition - Vector3Int.right)}");
-            Debug.Log($"+y {MapManager.Get(playerGridPosition + Vector3Int.up)}");
-            Debug.Log($"-y {MapManager.Get(playerGridPosition - Vector3Int.up)}");
-            Debug.Log($"+z {MapManager.Get(playerGridPosition + new Vector3Int(0, 0, 1))}");
-            Debug.Log($"-z {MapManager.Get(playerGridPosition - new Vector3Int(0, 0, 1))}");
-            var tr = Vector3.zero;
+            // todo: camera still passes through blocks if moving diagonally
+
             if (diff.x > 0 && MapManager.Get(playerGridPosition + Vector3Int.right).HasValue
                 || diff.x < 0 && MapManager.Get(playerGridPosition - Vector3Int.right).HasValue) {
-                Debug.Log("x off");
                 position.x = playerPosition.x;
             }
 
             if (diff.y > 0 && MapManager.Get(playerGridPosition + Vector3Int.up).HasValue
                 || diff.y < 0 && MapManager.Get(playerGridPosition - Vector3Int.up).HasValue) {
-                Debug.Log("y off");
                 position.y = playerPosition.y;
             }
 
             if (diff.z > 0 && MapManager.Get(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
                 || diff.z < 0 && MapManager.Get(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
-                Debug.Log("z off");
                 position.z = playerPosition.z;
+            }
+
+            if (diff.y < 0 && playerGridPosition.y == 0) {
+                position.y = 0;
             }
 
             transform1.position = position;

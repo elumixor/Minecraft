@@ -58,9 +58,9 @@ namespace Scenes.WorldScene.Map {
 //                outPosition = Position;
 //            }
 
-            public void Deconstruct(out BlockType outBlockType, out int outI) {
+            public void Deconstruct(out BlockType outBlockType, out int outIndex) {
                 outBlockType = blockType;
-                outI = Index;
+                outIndex = Index;
             }
 //
 //            public void Deconstruct(out BlockType outBlockType, out int outX, out int outY, out int outZ) {
@@ -84,13 +84,13 @@ namespace Scenes.WorldScene.Map {
 
         private void Reset() => Awake();
 
-        private static int ToPos(int x, int y, int z) => z * BlockSize * BlockSize + y * BlockSize + x;
+        private static int ToPos(int x, int y, int z) => x * BlockSizeSquared + y * BlockSize + z;
         private static int ToPos(Vector3Int pos) => ToPos(pos.x, pos.y, pos.z);
         
         private static (int x, int y, int z) FromPos(int i) {
-            var z = i / BlockSizeSquared;
-            var y = (i - z * BlockSizeSquared) / BlockSize;
-            var x = i - z * BlockSizeSquared - y * BlockSize;
+            var x = i / BlockSizeSquared;
+            var y = (i - x * BlockSizeSquared) / BlockSize;
+            var z = i - x * BlockSizeSquared - y * BlockSize;
             return (x, y, z);
         }
 
@@ -118,10 +118,11 @@ namespace Scenes.WorldScene.Map {
             for (var j = 0; j < map.Count; j++) {
                 var mapI = map[j].Index;
                 if (mapI == i) {
-                    map[j] = (blockType, i); return;
+                    map[j] = (blockType, i);
+                    return;
                 }
 
-                if (mapI < i) {
+                if (mapI > i) {
                     map.Insert(j, (blockType, i));
                     return;
                 }
