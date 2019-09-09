@@ -1,15 +1,16 @@
 using System;
+using Scenes.WorldScene.Map;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 namespace Scenes.WorldScene {
     public class PlayerCamera : MonoBehaviour {
-        private float pitch;
-        private float yaw;
         [SerializeField] private Transform playerCamera;
-
-
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private float translateSpeed = 10f;
+
+        private float pitch;
+        private float yaw;
 
         private void Awake() {
             var angles = transform.eulerAngles;
@@ -17,7 +18,6 @@ namespace Scenes.WorldScene {
             yaw = angles.y;
             Cursor.lockState = CursorLockMode.Locked;
         }
-
 
         private void LateUpdate() {
             pitch -= rotationSpeed * Input.GetAxis("Mouse Y");
@@ -27,13 +27,8 @@ namespace Scenes.WorldScene {
             pitch = Mathf.Clamp(pitch, -90f, 90f);
 
             // Wrap yaw:
-            while (yaw < 0f) {
-                yaw += 360f;
-            }
-
-            while (yaw >= 360f) {
-                yaw -= 360f;
-            }
+            while (yaw < 0f) yaw += 360f;
+            while (yaw >= 360f) yaw -= 360f;
 
             // Set orientation:
             playerCamera.eulerAngles = new Vector3(pitch, yaw, 0f);
@@ -66,6 +61,41 @@ namespace Scenes.WorldScene {
             }
 
             transform1.eulerAngles = oldRotation;
+
+            // Player is a sphere with radius of Settings.GridUnitWidth / 2
+            var position = transform1.position;
+            var playerGridPosition = Vector3Int.RoundToInt(position);
+            var playerPosition = (Vector3) playerGridPosition * Settings.GridUnitWidth;
+            var diff = position - playerPosition;
+
+            Debug.Log(diff);
+            Debug.Log($"position {playerGridPosition}");
+            Debug.Log($"+x {MapManager.Get(playerGridPosition + Vector3Int.right).HasValue}");
+            Debug.Log($"-x {MapManager.Get(playerGridPosition - Vector3Int.right)}");
+            Debug.Log($"+y {MapManager.Get(playerGridPosition + Vector3Int.up)}");
+            Debug.Log($"-y {MapManager.Get(playerGridPosition - Vector3Int.up)}");
+            Debug.Log($"+z {MapManager.Get(playerGridPosition + new Vector3Int(0, 0, 1))}");
+            Debug.Log($"-z {MapManager.Get(playerGridPosition - new Vector3Int(0, 0, 1))}");
+            var tr = Vector3.zero;
+            if (diff.x > 0 && MapManager.Get(playerGridPosition + Vector3Int.right).HasValue
+                || diff.x < 0 && MapManager.Get(playerGridPosition - Vector3Int.right).HasValue) {
+                Debug.Log("x off");
+                position.x = playerPosition.x;
+            }
+
+            if (diff.y > 0 && MapManager.Get(playerGridPosition + Vector3Int.up).HasValue
+                || diff.y < 0 && MapManager.Get(playerGridPosition - Vector3Int.up).HasValue) {
+                Debug.Log("y off");
+                position.y = playerPosition.y;
+            }
+
+            if (diff.z > 0 && MapManager.Get(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
+                || diff.z < 0 && MapManager.Get(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
+                Debug.Log("z off");
+                position.z = playerPosition.z;
+            }
+
+            transform1.position = position;
         }
     }
 }

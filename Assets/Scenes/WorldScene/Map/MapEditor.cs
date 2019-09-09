@@ -12,7 +12,10 @@ namespace Scenes.WorldScene.Map {
         }
 
         public override void OnInspectorGUI() {
-            base.OnInspectorGUI();
+//            base.OnInspectorGUI();
+            foreach (var ((x, y, z), blockType, index) in mapManager) {
+                GUILayout.Label($"{blockType} at ({x}, {y}, {z}) ({index})");
+            }
         }
     }
 }

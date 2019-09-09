@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Map {
-    public class MapManager : SingletonBehaviour<MapManager> {
+    public class MapManager : SingletonBehaviour<MapManager>, IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
         [Serializable]
         public struct BlockPosition {
             public BlockType blockType;
@@ -148,5 +148,11 @@ namespace Scenes.WorldScene.Map {
         public static void Remove(int x, int y, int z) => Remove(ToPos(x, y, z));
 
         public static void Remove (Vector3Int position) => Remove(ToPos(position));
+        public IEnumerator<((int x, int y, int z) position, BlockType blockType, int index)> GetEnumerator() {
+            foreach (var (blockType, index) in map)
+                yield return (FromPos(index), blockType, index);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
