@@ -5,11 +5,12 @@ using System.Linq;
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
 using Shared;
+using Shared.SingletonBehaviour;
 using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Map {
-    public class MapManager : SingletonBehaviour<MapManager>,
+    public class Terrain : SingletonBehaviour<Terrain>,
         IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
         [Serializable]
         public struct BlockPosition {
@@ -21,56 +22,13 @@ namespace Scenes.WorldScene.Map {
             [field: SerializeField]
             public int Index { get; private set; }
 
-//
-//            [SerializeField] private int x;
-//            [SerializeField] private int y;
-//            [SerializeField] private int z;
-//
-//            public int X {
-//                get => MapManager.FromPos(Index).x;
-//                set => x = value;
-//            }
-//
-//            public int Y {
-//                get => y;
-//                set => y = value;
-//            }
-//
-//            public int Z {
-//                get => z;
-//                set => z = value;
-//            }
-//
-//            public Vector3Int Position {
-//                get => new Vector3Int(x, y, z);
-//                set {
-//                    x = value.x;
-//                    y = value.y;
-//                    z = value.z;
-//                }
-//            }
-//
-//            public BlockType BlockType {
-//                get => blockType;
-//                set => blockType = value;
-//            }
-//
-//            public void Deconstruct(out BlockType outBlockType, out Vector3Int outPosition) {
-//                outBlockType = blockType;
-//                outPosition = Position;
-//            }
-
+            /// <summary>
+            /// Deconstruct into <see cref="BlockType"/> and block index
+            /// </summary>
             public void Deconstruct(out BlockType outBlockType, out int outIndex) {
                 outBlockType = blockType;
                 outIndex = Index;
             }
-//
-//            public void Deconstruct(out BlockType outBlockType, out int outX, out int outY, out int outZ) {
-//                outBlockType = blockType;
-//                outX = x;
-//                outY = y;
-//                outZ = z;
-//            }
 
             /// <summary>
             /// Implicit conversion from value tuple
@@ -83,8 +41,6 @@ namespace Scenes.WorldScene.Map {
         private const int BlockSizeSquared = BlockSize * BlockSize;
 
         [SerializeField] private List<BlockPosition> map = new List<BlockPosition>();
-
-        private void Reset() => Awake();
 
         private static int ToPos(int x, int y, int z) => x * BlockSizeSquared + y * BlockSize + z;
         private static int ToPos(Vector3Int pos) => ToPos(pos.x, pos.y, pos.z);

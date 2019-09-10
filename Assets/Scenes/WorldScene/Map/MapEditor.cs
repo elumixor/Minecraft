@@ -3,17 +3,17 @@ using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Map {
-    [CustomEditor(typeof(MapManager))]
+    [CustomEditor(typeof(Terrain))]
     public class MapEditor : Editor {
-        private MapManager mapManager;
+        private Terrain terrain;
 
         private void OnEnable() {
-            mapManager = (MapManager) target;
+            terrain = (Terrain) target;
         }
 
         public override void OnInspectorGUI() {
-            foreach (var ((x, y, z), blockType, index) in mapManager) {
-                GUILayout.Label($"{blockType} at ({x}, {y}, {z}) ({index}) ({MapManager.Get(x, y, z)})");
+            foreach (var ((x, y, z), blockType, index) in terrain) {
+                GUILayout.Label($"{blockType} at ({x}, {y}, {z}) ({index}) ({Terrain.Get(x, y, z)})");
             }
 
             base.OnInspectorGUI();

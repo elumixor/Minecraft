@@ -2,6 +2,7 @@
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.Block.BlockDataContainer;
 using Shared;
+using Shared.SingletonBehaviour;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
@@ -10,14 +11,6 @@ namespace Scenes.WorldScene.BlockSelection {
         // todo: this should be drag n drop from inspector and serialized lists with colors
         [SerializeField] private BlockType selectedType;
         [SerializeField] private bool isDestroying;
-
-        /// <summary>
-        /// Instantiate selector, create cubes
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        protected override void Awake() {
-            base.Awake();
-        }
 
         private void Update() {
             // todo: change cursor if 

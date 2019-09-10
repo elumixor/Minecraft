@@ -10,10 +10,11 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
+using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene {
     // todo: should be a singleton
-    public class UserAction : SingletonBehaviour<UserAction> {
+    public class UserAction : MonoBehaviour {
         [SerializeField] private GameObject previewCubeObject;
         [SerializeField] private Image cursor;
         [SerializeField] private Image destroyCursor;
@@ -23,7 +24,7 @@ namespace Scenes.WorldScene {
         private (Block.Block block, (float start, float end) time)? destruction;
         private (Renderer renderer, Transform transform, float opacity) previewCube;
 
-        protected override void Awake() {
+        protected void Awake() {
             mainCamera = Camera.main;
 
             var bigRect = destroyCursor.GetComponent<RectTransform>().rect;
@@ -42,7 +43,7 @@ namespace Scenes.WorldScene {
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
-            MapManager.Remove(block.Position);
+            Terrain.Remove(block.Position);
         }
 
 
@@ -91,10 +92,10 @@ namespace Scenes.WorldScene {
             }
 
             if (Input.GetKeyDown(KeyCode.G)) {
-                MapManager.ClearMap();
+                Terrain.ClearMap();
 
 //                IEnumerator Create() {
-                    var blockLocations = MapManager.GenerateChunk();
+                    var blockLocations = Terrain.GenerateChunk();
                     foreach (var (blockType, (x, y, z)) in blockLocations) {
                         Settings.CreateBlockInstance(blockType, x, y, z);
 //                        yield return null;
