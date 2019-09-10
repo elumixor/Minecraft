@@ -25,7 +25,7 @@ namespace Scenes.WorldScene {
             instance.Position = position;
             return instance;
         }
-        
+
         private void OnValidate() {
             if (floor == null) return;
 
@@ -34,5 +34,8 @@ namespace Scenes.WorldScene {
             transformPosition.y = -gridUnitWidth * .5f;
             tr.position = transformPosition;
         }
+
+        public static void CreateBlockInstance(BlockType blockType, int x, int y, int z) =>
+            CreateBlockInstance(blockType, new Vector3Int(x, y, z));
     }
 }

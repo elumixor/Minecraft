@@ -1,9 +1,9 @@
 namespace Scenes.WorldScene.Block {
     public enum BlockType {
-        Grass,
-        Metal,
+        Ground,
+        Rock,
         Water,
-        Wood
+        Sand
         // define additional enum types below
     }
 

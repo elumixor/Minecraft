@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Shared {
     public static class GeneralExtensions {
@@ -48,5 +49,17 @@ namespace Shared {
         /// Sets alpha value of image's color
         /// </summary>
         public static void SetColorAlpha(this Image image, float alpha) => image.color = image.color.SetAlpha(alpha);
+
+        /// <summary>
+        /// Destroys all children of transform
+        /// </summary>
+        /// <param name="transform">Transform, that should be cleared of children</param>
+        /// <param name="destroyImmediate">If true, performs DestroyImmediate, else performs regular Destroy</param>
+        public static void DestroyAllChildren(this Transform transform, bool destroyImmediate = false) {
+            foreach (Transform child in transform) {
+                if (destroyImmediate) Object.DestroyImmediate(child.gameObject);
+                Object.Destroy(child.gameObject);
+            }
+        }
     }
 }

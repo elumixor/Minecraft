@@ -1,5 +1,6 @@
 //using JetBrains.Annotations;
 
+using System.Collections;
 using JetBrains.Annotations;
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
@@ -87,6 +88,20 @@ namespace Scenes.WorldScene {
                 destruction = null;
                 destroyCursor.SetColorAlpha(0f);
                 cursor.transform.localScale = Vector3.one;
+            }
+
+            if (Input.GetKeyDown(KeyCode.G)) {
+                MapManager.ClearMap();
+
+//                IEnumerator Create() {
+                    var blockLocations = MapManager.GenerateChunk();
+                    foreach (var (blockType, (x, y, z)) in blockLocations) {
+                        Settings.CreateBlockInstance(blockType, x, y, z);
+//                        yield return null;
+                    }
+//                }
+
+//                StartCoroutine(Create());
             }
         }
     }

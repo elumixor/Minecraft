@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.4504543, g: 0.5004559, b: 0.5751866, a: 1}
+  m_IndirectSpecularColor: {r: 0.45045394, g: 0.50045544, b: 0.5751854, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -292,6 +292,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   map: []
+  waterLevel: 0
+  sandLevel: 0
 --- !u!4 &329337973
 Transform:
   m_ObjectHideFlags: 0
@@ -1012,11 +1014,11 @@ RectTransform:
   m_Father: {fileID: 1116552351}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 315.7, y: 138.5}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -10, y: -10}
   m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &1176611565
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1036,6 +1038,9 @@ MonoBehaviour:
   scale: 13.1
   persistance: 0.309
   lacunarity: 2.07
+  offsetX: 0
+  offsetY: 0
+  seed: 0
 --- !u!114 &1176611566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1166,6 +1171,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1831240771}
     m_Modifications:
+    - target: {fileID: 3838715469976644202, guid: 7120fbe96a4a0fc4e98b0af293188c89,
+        type: 3}
+      propertyPath: m_Name
+      value: Block
+      objectReference: {fileID: 0}
     - target: {fileID: 3838715469976644203, guid: 7120fbe96a4a0fc4e98b0af293188c89,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1220,11 +1230,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3838715469976644202, guid: 7120fbe96a4a0fc4e98b0af293188c89,
-        type: 3}
-      propertyPath: m_Name
-      value: Block
       objectReference: {fileID: 0}
     - target: {fileID: 3838715469976644200, guid: 7120fbe96a4a0fc4e98b0af293188c89,
         type: 3}
