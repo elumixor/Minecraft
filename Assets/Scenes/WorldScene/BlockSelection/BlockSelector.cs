@@ -11,14 +11,6 @@ namespace Scenes.WorldScene.BlockSelection {
         [SerializeField] private BlockType selectedType;
         [SerializeField] private bool isDestroying;
 
-        /// <summary>
-        /// Instantiate selector, create cubes
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        protected override void Awake() {
-            base.Awake();
-        }
-
         private void Update() {
             // todo: change cursor if 
             

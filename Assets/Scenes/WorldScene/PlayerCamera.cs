@@ -1,5 +1,6 @@
 using Scenes.WorldScene.Map;
 using UnityEngine;
+using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene {
     public class PlayerCamera : MonoBehaviour {
@@ -67,18 +68,18 @@ namespace Scenes.WorldScene {
 
             // todo: camera still passes through blocks if moving diagonally
 
-            if (diff.x > 0 && MapManager.Get(playerGridPosition + Vector3Int.right).HasValue
-                || diff.x < 0 && MapManager.Get(playerGridPosition - Vector3Int.right).HasValue) {
+            if (diff.x > 0 && Terrain.Get(playerGridPosition + Vector3Int.right).HasValue
+                || diff.x < 0 && Terrain.Get(playerGridPosition - Vector3Int.right).HasValue) {
                 position.x = playerPosition.x;
             }
 
-            if (diff.y > 0 && MapManager.Get(playerGridPosition + Vector3Int.up).HasValue
-                || diff.y < 0 && MapManager.Get(playerGridPosition - Vector3Int.up).HasValue) {
+            if (diff.y > 0 && Terrain.Get(playerGridPosition + Vector3Int.up).HasValue
+                || diff.y < 0 && Terrain.Get(playerGridPosition - Vector3Int.up).HasValue) {
                 position.y = playerPosition.y;
             }
 
-            if (diff.z > 0 && MapManager.Get(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
-                || diff.z < 0 && MapManager.Get(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
+            if (diff.z > 0 && Terrain.Get(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
+                || diff.z < 0 && Terrain.Get(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
                 position.z = playerPosition.z;
             }
 
