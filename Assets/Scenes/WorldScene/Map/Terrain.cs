@@ -10,8 +10,31 @@ using UnityEditor;
 using UnityEngine;
 
 namespace Scenes.WorldScene.Map {
-    public class Terrain : SingletonBehaviour<Terrain>,
-        IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
+    public class Terrain : SingletonBehaviour<Terrain>, IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
+        /// <summary>
+        /// Size of terrain block (x, y, and z size)
+        /// </summary>
+        private const int ChunkSize = 20;
+        
+        [SerializeField] private List<BlockPosition> map = new List<BlockPosition>();
+
+        /// <summary>
+        /// Current chunk the player is at
+        /// </summary>
+        public static (int x, int y, int z) CurrentChunkPosition { get; }
+        
+        /// <summary>
+        /// Blocks types and positions in current chunk
+        /// </summary>
+        public static IEnumerable<BlockPosition> CurrentChunk { get; }
+
+        /// <summary>
+        /// Generate terrain chunk at position
+        /// </summary>
+        public static void GenerateChunk(int x, int y, int z) { }
+
+//        public static void 
+
         [Serializable]
         public struct BlockPosition {
             public BlockType blockType;
@@ -29,6 +52,29 @@ namespace Scenes.WorldScene.Map {
                 outBlockType = blockType;
                 outIndex = Index;
             }
+            
+            /// <summary>
+            /// Deconstruct into <see cref="BlockType"/> and position
+            /// </summary>
+            public void Deconstruct(out BlockType outBlockType, out int x, out int y, out int z) {
+                outBlockType = blockType;
+                var (x1, y1, z1) = FromPos(Index);
+                x = x1;
+                y = y1;
+                z = z1;
+            }
+
+            /// <summary>
+            /// Deconstruct into <see cref="BlockType"/>, position and index
+            /// </summary>
+            public void Deconstruct(out BlockType outBlockType, out int x, out int y, out int z, out int outIndex) {
+                outBlockType = blockType;
+                outIndex = Index;
+                var (x1, y1, z1) = FromPos(outIndex);
+                x = x1;
+                y = y1;
+                z = z1;
+            }
 
             /// <summary>
             /// Implicit conversion from value tuple
@@ -37,18 +83,14 @@ namespace Scenes.WorldScene.Map {
                 new BlockPosition {blockType = valueTuple.blockType, Index = valueTuple.i};
         }
 
-        private const int BlockSize = 20;
-        private const int BlockSizeSquared = BlockSize * BlockSize;
 
-        [SerializeField] private List<BlockPosition> map = new List<BlockPosition>();
-
-        private static int ToPos(int x, int y, int z) => x * BlockSizeSquared + y * BlockSize + z;
+        private static int ToPos(int x, int y, int z) => x * (ChunkSize * ChunkSize) + y * ChunkSize + z;
         private static int ToPos(Vector3Int pos) => ToPos(pos.x, pos.y, pos.z);
 
         private static (int x, int y, int z) FromPos(int i) {
-            var x = i / BlockSizeSquared;
-            var y = (i - x * BlockSizeSquared) / BlockSize;
-            var z = i - x * BlockSizeSquared - y * BlockSize;
+            var x = i / (ChunkSize * ChunkSize);
+            var y = (i - x * ChunkSize * ChunkSize) / ChunkSize;
+            var z = i - x * ChunkSize * ChunkSize - y * ChunkSize;
             return (x, y, z);
         }
 
@@ -118,10 +160,10 @@ namespace Scenes.WorldScene.Map {
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        [SerializeField, Range(0, BlockSize)] private int waterLevel;
-        [SerializeField, Range(0, BlockSize)] private int sandDepth;
-        [SerializeField, Range(0, BlockSize)] private int groundDepth;
-        [SerializeField, Range(0, BlockSize)] private int groundUnderwaterDepth;
+        [SerializeField, Range(0, ChunkSize)] private int waterLevel;
+        [SerializeField, Range(0, ChunkSize)] private int sandDepth;
+        [SerializeField, Range(0, ChunkSize)] private int groundDepth;
+        [SerializeField, Range(0, ChunkSize)] private int groundUnderwaterDepth;
 
         public static void ClearMap() {
             Settings.BlocksContainer.DestroyAllChildren();
@@ -129,7 +171,7 @@ namespace Scenes.WorldScene.Map {
         }
 
         public static List<(BlockType Rock, (int x, int z, int y))> GenerateChunk() {
-            var points = MapGenerator.Generate(BlockSize, BlockSize, 20, 0, 0, 50000);
+            var points = MapGenerator.Generate(ChunkSize, ChunkSize, 20, 0, 0, 50000);
             var top = Instance.waterLevel + Instance.sandDepth;
             var bottom = Math.Max(0, Instance.waterLevel - Instance.sandDepth);
 
@@ -140,14 +182,14 @@ namespace Scenes.WorldScene.Map {
             var groundUnderwaterDepth = Instance.groundUnderwaterDepth;
             var sandDepth = Instance.sandDepth;
 
-            for (var z = 0; z < BlockSize; z++)
-            for (var x = 0; x < BlockSize; x++) {
+            for (var z = 0; z < ChunkSize; z++)
+            for (var x = 0; x < ChunkSize; x++) {
                 void Set(BlockType blockType, int from, int to) {
                     for (var y = Math.Max(0, from); y < to; y++) blockPositions.Add((blockType, (x, y, z)));
                 }
 
-                var height = Mathf.RoundToInt(points[x, z] * BlockSize);
-                
+                var height = Mathf.RoundToInt(points[x, z] * ChunkSize);
+
                 if (height > waterLevel + groundDepth) {
                     Set(BlockType.Rock, 0, height - groundDepth);
                     Set(BlockType.Ground, height - groundDepth, height);
@@ -157,7 +199,8 @@ namespace Scenes.WorldScene.Map {
                 } else if (height > waterLevel) {
                     Set(BlockType.Rock, 0, waterLevel - sandDepth);
                     Set(BlockType.Sand, waterLevel - sandDepth, height - sandDepth);
-                } else { // >= waterLevel
+                } else {
+                    // >= waterLevel
                     Set(BlockType.Rock, 0, height - sandDepth);
                     Set(BlockType.Sand, height - sandDepth, height);
                     Set(BlockType.Water, height, waterLevel);

@@ -1,9 +1,15 @@
 using Scenes.WorldScene.Map;
+using Shared.SingletonBehaviour;
 using UnityEngine;
 using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene {
-    public class PlayerCamera : MonoBehaviour {
+    public class Player : SingletonBehaviour<Player> {
+        /// <summary>
+        /// Position in <see cref="Terrain.Chunk"/>
+        /// </summary>
+        public static (int x, int y, int z) Position { get; set; }
+        
         [SerializeField] private Transform playerCamera;
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private float translateSpeed = 10f;
@@ -11,7 +17,7 @@ namespace Scenes.WorldScene {
         private float pitch;
         private float yaw;
 
-        private void Awake() {
+        protected override void Awake() {
             var angles = transform.eulerAngles;
             pitch = angles.x;
             yaw = angles.y;
