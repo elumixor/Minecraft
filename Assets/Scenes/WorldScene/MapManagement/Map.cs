@@ -1,37 +1,49 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using JetBrains.Annotations;
 using Scenes.WorldScene.Block;
-using Scenes.WorldScene.BlockSelection;
 using Shared;
 using Shared.SingletonBehaviour;
-using UnityEditor;
 using UnityEngine;
 
-namespace Scenes.WorldScene.Map {
-    public class Terrain : SingletonBehaviour<Terrain>, IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
+namespace Scenes.WorldScene.MapManagement {
+    public class Map : SingletonBehaviour<Map>,
+        IEnumerable<((int x, int y, int z) position, BlockType blockType, int index)> {
+
+        // Public API
+
+        // Generate new chunk at xyz coordinate in chunk coordinates
+        public static void GenerateChunk(int x, int y, int z) => throw new NotImplementedException();
+
+        // Set or remove block at current chunk
+        public static void SetBlock([CanBeNull] BlockType? blockType, int x, int y, int z) =>
+            throw new NotImplementedException();
+
+        // Set or remove block at specific chunk
+        public static void SetBlock([CanBeNull] BlockType? blockType, int x, int y, int z,
+            int chunkX, int chunkY, int chunkZ) => throw new NotImplementedException();
+
+
+
+
+
         /// <summary>
         /// Size of terrain block (x, y, and z size)
         /// </summary>
         private const int ChunkSize = 20;
-        
+
         [SerializeField] private List<BlockPosition> map = new List<BlockPosition>();
 
         /// <summary>
         /// Current chunk the player is at
         /// </summary>
         public static (int x, int y, int z) CurrentChunkPosition { get; }
-        
+
         /// <summary>
         /// Blocks types and positions in current chunk
         /// </summary>
         public static IEnumerable<BlockPosition> CurrentChunk { get; }
-
-        /// <summary>
-        /// Generate terrain chunk at position
-        /// </summary>
-        public static void GenerateChunk(int x, int y, int z) { }
 
 //        public static void 
 
@@ -52,7 +64,7 @@ namespace Scenes.WorldScene.Map {
                 outBlockType = blockType;
                 outIndex = Index;
             }
-            
+
             /// <summary>
             /// Deconstruct into <see cref="BlockType"/> and position
             /// </summary>

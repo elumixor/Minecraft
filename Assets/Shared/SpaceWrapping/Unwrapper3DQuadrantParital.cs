@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace Shared.SpaceUnwrapping {
-    public class Unwrapper3DQuadrant : Unwrapper {
+namespace Shared.SpaceWrapping {
+    public class Unwrapper3DQuadrantParital : Unwrapper {
         protected override void Unwrap(int i, out int x, out int y, out int z) {
             if (i == 0) {
                 x = z = y = 0;

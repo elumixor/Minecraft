@@ -1,8 +1,7 @@
 using System;
-using Scenes.WorldScene.Map;
+using Scenes.WorldScene.MapManagement;
 using UnityEditor;
 using UnityEngine;
-using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene.Block {
     [RequireComponent(typeof(MeshRenderer))]
@@ -35,11 +34,11 @@ namespace Scenes.WorldScene.Block {
         }
 
         private void Start() {
-            Terrain.Set(blockType, position);
+            Map.Set(blockType, position);
         }
 
         private void OnDestroy() {
-            Terrain.Remove(position);
+            Map.Remove(position);
         }
 
         private void Reset() => meshRenderer = GetComponent<MeshRenderer>();

@@ -1,9 +1,8 @@
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
-using Scenes.WorldScene.Map;
+using Scenes.WorldScene.MapManagement;
 using UnityEditor;
 using UnityEngine;
-using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene {
     public interface IBuildable {
@@ -19,7 +18,7 @@ namespace Scenes.WorldScene {
             transform.parent = Settings.BlocksContainer;
             instance.BlockType = selectedType;
             instance.Position = blockLocation;
-            Terrain.Set(selectedType, blockLocation);
+            Map.Set(selectedType, blockLocation);
         }
     }
 }
