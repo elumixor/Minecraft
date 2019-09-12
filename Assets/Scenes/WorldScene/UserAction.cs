@@ -4,13 +4,12 @@ using System.Collections;
 using JetBrains.Annotations;
 using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
-using Scenes.WorldScene.Map;
+using Scenes.WorldScene.MapManagement;
 using Shared;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
-using Terrain = Scenes.WorldScene.Map.Terrain;
 
 namespace Scenes.WorldScene {
     // todo: should be a singleton
@@ -43,7 +42,7 @@ namespace Scenes.WorldScene {
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
-            Terrain.Remove(block.Position);
+            Map.Remove(block.Position);
         }
 
 
@@ -92,10 +91,10 @@ namespace Scenes.WorldScene {
             }
 
             if (Input.GetKeyDown(KeyCode.G)) {
-                Terrain.ClearMap();
+                Map.ClearMap();
 
 //                IEnumerator Create() {
-                    var blockLocations = Terrain.GenerateChunk();
+                    var blockLocations = Map.GenerateChunk();
                     foreach (var (blockType, (x, y, z)) in blockLocations) {
                         Settings.CreateBlockInstance(blockType, x, y, z);
 //                        yield return null;

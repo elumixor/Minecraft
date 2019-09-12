@@ -7,7 +7,6 @@ namespace Scenes.WorldScene.Floor {
         [SerializeField] private Transform cameraTransform;
         [SerializeField] private Vector3 offset;
 
-
         private void Update() {
             if (cameraTransform == null) return;
 
