@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -32,6 +33,13 @@ namespace Shared.SpaceUnwrapping {
                 StartCoroutine(UnwrapCoroutine());
             }
         }
+
+        private static readonly Dictionary<int, int> SqrtDictionary = new Dictionary<int, int>();
+        protected static int Sqrt(int value) {
+            if (SqrtDictionary.ContainsKey(value)) return SqrtDictionary[value];
+            return SqrtDictionary[value] = Mathf.FloorToInt((float) Math.Sqrt(value));
+        }
+
         private void Update() {
             if (Input.GetKeyDown(KeyCode.U)) Unwrap();
             else if (Input.GetKeyDown(KeyCode.S)) shouldStop = true;
