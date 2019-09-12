@@ -1,9 +1,6 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Assertions;
 
-namespace Shared.SpaceUnwrapping {
+namespace Shared.SpaceWrapping {
     public class Unwrapper3DQuadrant : Unwrapper {
         protected override void Unwrap(int i, out int x, out int y, out int z) {
             if (i == 0) {
@@ -25,26 +22,10 @@ namespace Shared.SpaceUnwrapping {
         }
 
         private static readonly Dictionary<int, int> BaseDictionary = new Dictionary<int, int>();
-        private static readonly Dictionary<int, int> BranchDictionary = new Dictionary<int, int>();
-
-        private static int P(int y) {
-            Debug.Assert(y >= 0, "y >= 0");
-            return 2 * y + 1;
-        }
-        private static int NumberOfPointsAtBranch(int x) => BranchDictionary.ContainsKey(x)
-            ? BranchDictionary[x]
-            : BranchDictionary[x] = 3 * x * x + x;
 
         private static int BaseByX(int x) => BaseDictionary.ContainsKey(x)
             ? BaseDictionary[x]
             : BaseDictionary[x] = x * x * (x - 1) + 1;
-
-        private static int BranchForI(int i) {
-            Debug.Assert(i >= 0, "i >= 0");
-            var baseX = 1;
-            while (i >= BaseByX(baseX)) baseX++;
-            return baseX - 1;
-        }
 
         private static void CoordsByIndexInBranch(int i, int branch, out int x, out int y, out int z) {
             var straightIndex = branch * branch;
@@ -73,7 +54,6 @@ namespace Shared.SpaceUnwrapping {
         }
 
         private static int BranchForI(int i, out int baseValue) {
-            Debug.Assert(i >= 0, "i >= 0");
             var baseX = 1;
             while (i >= BaseByX(baseX)) baseX++;
             baseX -= 1;

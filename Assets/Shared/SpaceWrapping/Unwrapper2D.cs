@@ -1,16 +1,7 @@
 using System;
-using System.Collections.Generic;
-using UnityEngine;
 
-namespace Shared.SpaceUnwrapping {
+namespace Shared.SpaceWrapping {
     public class Unwrapper2D : Unwrapper {
-        private static readonly Dictionary<int, int> SqrtLookup = new Dictionary<int, int>();
-
-        private static int Sqrt(int value) {
-            if (SqrtLookup.ContainsKey(value)) return SqrtLookup[value];
-            return SqrtLookup[value] = Mathf.FloorToInt((float) Math.Sqrt(value));
-        }
-
         protected override void Unwrap(int i, out int x, out int y, out int z) {
             z = 0;
             if (i == 0) {
