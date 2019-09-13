@@ -8,6 +8,10 @@ namespace Shared.SpaceWrapping {
     public static class Wrapper {
         private static readonly Dictionary<int, int> BaseDictionary = new Dictionary<int, int>();
 
+        // todo: change algorithm and optimize (un-)wrapping
+
+        // todo: should return ulong
+
         public static long Wrap(int x, int y, int z) {
             if (x == 0 && y == 0) return z <= 0 ? z * -6 : z * 6 - 1;
 
@@ -17,6 +21,7 @@ namespace Shared.SpaceWrapping {
 
             return WrapQuadrant(x, y, z) * 6 - 5;
         }
+
         public static void Unwrap(long i, out int x, out int y, out int z) {
             if (i == 0) {
                 x = z = y = 0;
@@ -79,6 +84,7 @@ namespace Shared.SpaceWrapping {
                 y = branchY + z;
             }
         }
+
         private static int BranchForI(long i, out int baseValue) {
             var baseX = 1;
             while (i >= BaseByX(baseX)) baseX++;
@@ -86,6 +92,7 @@ namespace Shared.SpaceWrapping {
             baseValue = BaseByX(baseX);
             return baseX;
         }
+
         private static long WrapQuadrant(int x, int y, int z) {
             if (z != 0) {
                 var zAbs = Math.Abs(z);

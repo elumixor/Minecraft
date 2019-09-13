@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Shared.EnumObjects;
 using UnityEngine;
 
-namespace Scenes.WorldScene.Block.BlockDataContainer {
+namespace Shared.Blocks.BlockDataContainer {
     /// <summary>
     /// Stores and maps block types to <see cref="BlockData"/>
     /// </summary>

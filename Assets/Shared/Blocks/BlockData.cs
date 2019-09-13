@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Scenes.WorldScene.Block {
+namespace Shared.Blocks {
     [Serializable]
     public struct BlockData {
         /// <summary>

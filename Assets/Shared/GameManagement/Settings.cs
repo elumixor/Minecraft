@@ -1,25 +1,23 @@
-using System;
-using Scenes.WorldScene.Block;
-using Scenes.WorldScene.Block.BlockDataContainer;
-using Shared;
+using Shared.Blocks;
+using Shared.Blocks.BlockDataContainer;
 using Shared.SingletonBehaviour;
 using UnityEditor;
 using UnityEngine;
 
-namespace Scenes.WorldScene {
+namespace Shared.GameManagement {
     public class Settings : SingletonBehaviour<Settings> {
-        [SerializeField] private Block.Block blockPrefab;
+        [SerializeField] private Block blockPrefab;
         [SerializeField] private BlockDataContainer blockDataContainer;
         [SerializeField] private Transform blocksContainer;
         [SerializeField] private Transform floor;
         [SerializeField, Range(0.1f, 10f)] private float gridUnitWidth;
-        public static Block.Block BlockPrefab => Instance.blockPrefab;
+        public static Block BlockPrefab => Instance.blockPrefab;
         public static BlockDataContainer BlockDataContainer => Instance.blockDataContainer;
         public static Transform BlocksContainer => Instance.blocksContainer;
         public static float GridUnitWidth => Instance.gridUnitWidth;
 
-        public static Block.Block CreateBlockInstance(BlockType blockType = default, Vector3Int position = default) {
-            var instance = (Block.Block) PrefabUtility.InstantiatePrefab(BlockPrefab);
+        public static Block CreateBlockInstance(BlockType blockType = default, Vector3Int position = default) {
+            var instance = (Block) PrefabUtility.InstantiatePrefab(BlockPrefab);
             var transform = instance.transform;
             transform.parent = BlocksContainer;
             instance.BlockType = blockType;

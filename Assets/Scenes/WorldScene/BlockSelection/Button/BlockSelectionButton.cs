@@ -1,4 +1,4 @@
-﻿using Scenes.WorldScene.Block;
+﻿using Shared.Blocks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

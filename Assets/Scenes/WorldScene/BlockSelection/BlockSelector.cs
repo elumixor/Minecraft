@@ -1,7 +1,6 @@
 ﻿using System;
-using Scenes.WorldScene.Block;
-using Scenes.WorldScene.Block.BlockDataContainer;
 using Shared;
+using Shared.Blocks;
 using Shared.SingletonBehaviour;
 using UnityEngine;
 using UnityEngine.PlayerLoop;

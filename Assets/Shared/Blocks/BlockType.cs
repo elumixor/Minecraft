@@ -1,4 +1,6 @@
-namespace Scenes.WorldScene.Block {
+using Shared.GameManagement;
+
+namespace Shared.Blocks {
     public enum BlockType {
         Ground,
         Rock,

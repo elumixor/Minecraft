@@ -1,3 +1,15 @@
-﻿{
-	"name": "MainMenu"
+{
+    "name": "MainMenu",
+    "references": [
+        "GUID:f6f20e4a9a7221f4aaf53cf7b6b3ed6f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

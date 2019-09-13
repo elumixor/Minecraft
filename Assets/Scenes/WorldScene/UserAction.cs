@@ -2,10 +2,10 @@
 
 using System.Collections;
 using JetBrains.Annotations;
-using Scenes.WorldScene.Block;
 using Scenes.WorldScene.BlockSelection;
-using Scenes.WorldScene.MapManagement;
 using Shared;
+using Shared.Blocks;
+using Shared.GameManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -20,7 +20,7 @@ namespace Scenes.WorldScene {
 
         private Camera mainCamera;
         private Vector2 cursorsDifference;
-        private (Block.Block block, (float start, float end) time)? destruction;
+        private (Block block, (float start, float end) time)? destruction;
         private (Renderer renderer, Transform transform, float opacity) previewCube;
 
         protected void Awake() {
@@ -37,12 +37,12 @@ namespace Scenes.WorldScene {
             previewCube = (previewRenderer, previewCubeObject.transform, previewRenderer.sharedMaterial.color.a);
         }
 
-        private void DestroySelectedBlock(Block.Block block) {
-            Destroy(block.gameObject);
+        private void DestroySelectedBlock(Block block) {
+            Map.Remove(block.Position);
+            Block.Remove(block);
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
-            Map.Remove(block.Position);
         }
 
 
@@ -78,7 +78,7 @@ namespace Scenes.WorldScene {
 
                 if (Input.GetMouseButtonDown(0)) {
                     if (notDestroying) Settings.CreateBlockInstance(BlockSelector.SelectedType, buildPosition);
-                    else if (objectHit.GetComponent<Block.Block>() is var block && block != null) {
+                    else if (objectHit.GetComponent<Block>() is var block && block != null) {
                         var now = Time.time;
                         destruction = (block, (now, now + block.BlockType.BlockData().durability));
                         destroyCursor.SetColorAlpha(.5f);
@@ -88,20 +88,6 @@ namespace Scenes.WorldScene {
                 destruction = null;
                 destroyCursor.SetColorAlpha(0f);
                 cursor.transform.localScale = Vector3.one;
-            }
-
-            if (Input.GetKeyDown(KeyCode.G)) {
-                Map.ClearMap();
-
-//                IEnumerator Create() {
-                    var blockLocations = Map.GenerateChunk();
-                    foreach (var (blockType, (x, y, z)) in blockLocations) {
-                        Settings.CreateBlockInstance(blockType, x, y, z);
-//                        yield return null;
-                    }
-//                }
-
-//                StartCoroutine(Create());
             }
         }
     }

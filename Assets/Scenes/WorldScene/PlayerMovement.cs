@@ -1,20 +1,10 @@
 using System;
-using Scenes.WorldScene.MapManagement;
+using Shared.GameManagement;
 using Shared.SingletonBehaviour;
 using UnityEngine;
 
 namespace Scenes.WorldScene {
-    public class Player : SingletonBehaviour<Player> {
-        // position in chunk
-        public static (int x, int y, int z) Position => throw new NotImplementedException();
-
-        // position of chunk itself
-        public static (int x, int y, int z) ChunkPosition => throw new NotImplementedException();
-
-        // global position wrt Position and ChunkPosition
-        public static (int x, int y, int z) GlobalPosition => throw new NotImplementedException();
-
-
+    public class PlayerMovement : MonoBehaviour {
         [SerializeField] private Transform playerCamera;
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private float translateSpeed = 10f;
@@ -22,7 +12,7 @@ namespace Scenes.WorldScene {
         private float pitch;
         private float yaw;
 
-        protected override void Awake() {
+        private void Awake() {
             var angles = transform.eulerAngles;
             pitch = angles.x;
             yaw = angles.y;
@@ -79,18 +69,18 @@ namespace Scenes.WorldScene {
 
             // todo: camera still passes through blocks if moving diagonally
 
-            if (diff.x > 0 && Map.Get(playerGridPosition + Vector3Int.right).HasValue
-                || diff.x < 0 && Map.Get(playerGridPosition - Vector3Int.right).HasValue) {
+            if (diff.x > 0 && Map.GetBlock(playerGridPosition + Vector3Int.right).HasValue
+                || diff.x < 0 && Map.GetBlock(playerGridPosition - Vector3Int.right).HasValue) {
                 position.x = playerPosition.x;
             }
 
-            if (diff.y > 0 && Map.Get(playerGridPosition + Vector3Int.up).HasValue
-                || diff.y < 0 && Map.Get(playerGridPosition - Vector3Int.up).HasValue) {
+            if (diff.y > 0 && Map.GetBlock(playerGridPosition + Vector3Int.up).HasValue
+                || diff.y < 0 && Map.GetBlock(playerGridPosition - Vector3Int.up).HasValue) {
                 position.y = playerPosition.y;
             }
 
-            if (diff.z > 0 && Map.Get(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
-                || diff.z < 0 && Map.Get(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
+            if (diff.z > 0 && Map.GetBlock(playerGridPosition + new Vector3Int(0, 0, 1)).HasValue
+                || diff.z < 0 && Map.GetBlock(playerGridPosition - new Vector3Int(0, 0, 1)).HasValue) {
                 position.z = playerPosition.z;
             }
 
@@ -99,6 +89,7 @@ namespace Scenes.WorldScene {
             }
 
             transform1.position = position;
+            PlayerPosition.GlobalPosition = Vector3Int.RoundToInt(position / Settings.GridUnitWidth);
         }
     }
 }

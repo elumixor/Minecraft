@@ -1,6 +1,6 @@
 using System;
-using Scenes.WorldScene.Block;
-using Scenes.WorldScene.Block.BlockDataContainer;
+using Shared.Blocks;
+using Shared.Blocks.BlockDataContainer;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
