@@ -5,15 +5,14 @@ using UnityEngine;
 namespace Shared.GameManagement {
     public class PlayerPosition : SingletonBehaviour<PlayerPosition> {
         // position in chunk
-        public static Vector3Int Position { get; private set; }
+        public static Vector3Int Position { get; set; }
 
         private static UIntPosition currentChunk;
-        private static UIntPosition globalPosition;
 
         // position of chunk itself
         public static UIntPosition CurrentChunk {
             get => currentChunk;
-            private set {
+            set {
                 if (currentChunk != value) {
                     var diff = value - currentChunk;
                     if (diff.x != 0) {
@@ -48,9 +47,6 @@ namespace Shared.GameManagement {
         public static UIntPosition GlobalPosition {
             get => Map.GlobalPosition(Position, currentChunk);
             set {
-                if (globalPosition == value) return;
-
-                globalPosition = value;
                 CurrentChunk = value / Map.ChunkSize;
                 Position = value - currentChunk * Map.ChunkSize;
             }

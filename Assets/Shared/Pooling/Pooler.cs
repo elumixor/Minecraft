@@ -69,6 +69,8 @@ namespace Shared.Pooling {
             }
         }
 
+        private void OnApplicationQuit() => Destroy(objectsContainer.gameObject);
+
         private static GameObject ExpandQueue(Queue<GameObject> queue, GameObject prefab) {
             var gameObject = Instantiate(prefab, objectsContainer, true);
             gameObject.SetActive(false);

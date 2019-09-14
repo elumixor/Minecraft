@@ -51,17 +51,22 @@ namespace Shared.GameManagement {
             onLoaded = () => {
                 Map.Zero = (Instance.seed, Instance.seed);
 
-                // todo: make this vertically correct, e.g. y should be non-negative
                 for (var x = -1; x <= 1; x++)
-                for (var y = -1; y <= 1; y++)
+                for (var y = 0; y <= 2; y++)
                 for (var z = -1; z <= 1; z++) {
-                    var pos = new UIntPosition(x,y,z);
+                    var pos = new UIntPosition(x, y, z);
                     var mapChunk = Map.GenerateChunk(pos);
                     Map.InstantiateChunk(mapChunk, pos);
                 }
 
-                // todo: same for this
-                PlayerPosition.GlobalPosition = (0, 0, 0);
+                var centralChunk = Map.GetChunk(new UIntPosition(0,1,0));
+                var playerY = 0;
+                while (centralChunk.ContainsKey(Map.IndexInChunk(0, playerY, 0))) {
+                    playerY++;
+                }
+
+                PlayerPosition.CurrentChunk = (0, 1, 0);
+                PlayerPosition.Position = new Vector3Int(0, Map.ChunkSize + playerY, 0);
 
                 onLoaded = null;
             };

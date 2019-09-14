@@ -38,53 +38,37 @@ namespace Shared.GameManagement {
 
         // Public API
 
-        public static SortedDictionary<int, BlockType> GetChunk(UIntPosition position, bool generateIfMissing = true) {
+        public static SortedDictionary<int, BlockType>
+            GetChunk(UIntPosition position, bool generateIfMissing = true, bool overwrite = true) {
             var index = position.Index;
-            if (Storage.TryGetValue(index, out var chunk)) return chunk;
-            
+            if (Storage.TryGetValue(index, out var chunk)) return overwrite ? GenerateChunk(position) : chunk;
+
             return !generateIfMissing ? null : GenerateChunk(position);
         }
 
         // Generate new chunk at xyz coordinate in chunk coordinates
-        public static SortedDictionary<int, BlockType> GenerateChunk(UIntPosition position) {
-            var offsetX = (Zero.x + position.x) * ChunkSize;
-            var offsetY = (Zero.y + position.y) * ChunkSize;
+        public static SortedDictionary<int, BlockType> GenerateChunk(UIntPosition position, bool overwrite = true) {
+            var pos = position.MaxY(0);
+            var chunkIndex = pos.Index;
+            if (Storage.TryGetValue(chunkIndex, out var chunk) && !overwrite) return chunk;
 
-            var points = new float[ChunkSize, ChunkSize];
+            switch (pos.y) {
+                case 1:
+                    return Storage[chunkIndex] = TerrainToBlockMap(PerlinMap(pos.x, pos.z));
+                case 0: {
+                    var rockChunk = new SortedDictionary<int, BlockType>();
+                    for (var z = 0; z < ChunkSize; z++)
+                    for (var y = 0; y < ChunkSize; y++)
+                    for (var x = 0; x < ChunkSize; x++)
+                        rockChunk[IndexInChunk(x, y, z)] = BlockType.Rock;
 
-            var minHeight = float.MaxValue;
-            var maxHeight = float.MinValue;
-
-            for (var y = 0; y < ChunkSize; y++)
-            for (var x = 0; x < ChunkSize; x++) {
-                var amplitude = 1f;
-                var frequency = 1f;
-                var noiseHeight = 0f;
-
-                for (var i = 0; i < Instance.octaves; i++) {
-                    var xValue = (x + (float) offsetX) / Instance.scale * frequency;
-                    var yValue = (y + (float) offsetY) / Instance.scale * frequency;
-                    noiseHeight += (Mathf.PerlinNoise(xValue, yValue) * 2 - 1) * amplitude;
-
-                    amplitude *= Instance.persistance;
-                    frequency *= Instance.lacunarity;
+                    return Storage[chunkIndex] = rockChunk;
                 }
-
-                if (noiseHeight > maxHeight) maxHeight = noiseHeight;
-                if (noiseHeight < minHeight) minHeight = noiseHeight;
-
-                points[x, y] = noiseHeight;
+                default:
+                    // todo: generate clouds? :)
+                    // empty chunk, as we are in air
+                    return Storage[chunkIndex] = new SortedDictionary<int, BlockType>();
             }
-
-            for (var y = 0; y < ChunkSize; y++)
-            for (var x = 0; x < ChunkSize; x++) {
-                points[x, y] = Mathf.InverseLerp(minHeight, maxHeight, points[x, y]);
-            }
-
-            var perlinPoints = points;
-
-            // todo: check if chunk exists and conditionally overwrite
-            return Storage[position.Index] = TerrainToBlockMap(perlinPoints);
         }
 
         public static void CreateFrom(MapStorage mapData) => Storage = mapData;
@@ -128,18 +112,55 @@ namespace Shared.GameManagement {
         public static UIntPosition GlobalPosition(Vector3Int position, UIntPosition chunkPosition) =>
             chunkPosition * ChunkSize + (UIntPosition) position;
 
-        public static void InstantiateChunk(UIntPosition chunkPosition) =>
-            InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
+        public static void InstantiateChunk(UIntPosition chunkPosition) => InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
 
         public static void InstantiateChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
             foreach (var kvp in chunk) Block.Add(kvp.Value, FromChunkIndex(kvp.Key), chunkPosition);
         }
 
         public static void DestroyChunk(UIntPosition chunkPosition) =>
-            DestroyChunk(Storage[chunkPosition.Index], chunkPosition);
+            DestroyChunk(Storage[chunkPosition.MaxY(0).Index], chunkPosition.MaxY(0));
 
         public static void DestroyChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
             foreach (var kvp in chunk) Block.Remove(FromChunkIndex(kvp.Key), chunkPosition);
+        }
+
+        private static float[,] PerlinMap(int xOffset, int yOffset) {
+            var offsetX = (Zero.x + xOffset) * ChunkSize;
+            var offsetY = (Zero.y + yOffset) * ChunkSize;
+
+            var points = new float[ChunkSize, ChunkSize];
+
+            var minHeight = float.MaxValue;
+            var maxHeight = float.MinValue;
+
+            for (var y = 0; y < ChunkSize; y++)
+            for (var x = 0; x < ChunkSize; x++) {
+                var amplitude = 1f;
+                var frequency = 1f;
+                var noiseHeight = 0f;
+
+                for (var i = 0; i < Instance.octaves; i++) {
+                    var xValue = (x + (float) offsetX) / Instance.scale * frequency;
+                    var yValue = (y + (float) offsetY) / Instance.scale * frequency;
+                    noiseHeight += (Mathf.PerlinNoise(xValue, yValue) * 2 - 1) * amplitude;
+
+                    amplitude *= Instance.persistance;
+                    frequency *= Instance.lacunarity;
+                }
+
+                if (noiseHeight > maxHeight) maxHeight = noiseHeight;
+                if (noiseHeight < minHeight) minHeight = noiseHeight;
+
+                points[x, y] = noiseHeight;
+            }
+
+            for (var y = 0; y < ChunkSize; y++)
+            for (var x = 0; x < ChunkSize; x++) {
+                points[x, y] = Mathf.InverseLerp(minHeight, maxHeight, points[x, y]);
+            }
+
+            return points;
         }
 
         private static SortedDictionary<int, BlockType> TerrainToBlockMap(float[,] points) {

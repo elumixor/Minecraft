@@ -19,6 +19,10 @@ namespace Scenes.WorldScene {
             Cursor.lockState = CursorLockMode.Locked;
         }
 
+        private void Start() {
+            transform.position = (Vector3) PlayerPosition.GlobalPosition * Settings.GridUnitWidth;
+        }
+
         private void LateUpdate() {
             pitch -= rotationSpeed * Input.GetAxis("Mouse Y");
             yaw += rotationSpeed * Input.GetAxis("Mouse X");

@@ -26,6 +26,7 @@ namespace Shared.SpaceWrapping {
         /// 0 0 0
         /// </summary>
         public static UIntPosition Zero { get; } = new UIntPosition();
+
         /// <summary>
         /// 1 1 1
         /// </summary>
@@ -35,6 +36,7 @@ namespace Shared.SpaceWrapping {
         /// 1 0 0
         /// </summary>
         public static UIntPosition Right { get; } = new UIntPosition(1, 0, 0);
+
         /// <summary>
         /// -1 0 0
         /// </summary>
@@ -44,6 +46,7 @@ namespace Shared.SpaceWrapping {
         /// 0 1 0
         /// </summary>
         public static UIntPosition Up { get; } = new UIntPosition(0, 1, 0);
+
         /// <summary>
         /// 0 -1 0
         /// </summary>
@@ -53,6 +56,7 @@ namespace Shared.SpaceWrapping {
         /// 0 0 1
         /// </summary>
         public static UIntPosition Forward { get; } = new UIntPosition(0, 0, 1);
+
         /// <summary>
         /// 0 0 -1
         /// </summary>
@@ -120,7 +124,7 @@ namespace Shared.SpaceWrapping {
 
         public static bool operator ==(UIntPosition a, UIntPosition b) => a.x == b.x && a.y == b.y && a.z == b.z;
         public static bool operator !=(UIntPosition a, UIntPosition b) => !(a == b);
-        
+
         public bool Equals(UIntPosition other) => this == other;
 
         public override bool Equals(object obj) => obj is UIntPosition other && Equals(other);
@@ -129,10 +133,53 @@ namespace Shared.SpaceWrapping {
 
         #endregion
 
+        #region Max
+
+        public UIntPosition MaxX(int max) => x < max ? new UIntPosition(max, y, z) : this;
+        public UIntPosition MaxY(int max) => y < max ? new UIntPosition(x, max, z) : this;
+        public UIntPosition MaxZ(int max) => z < max ? new UIntPosition(x, y, max) : this;
+        public UIntPosition Max(UIntPosition max) => Max(max.x, max.y, max.z);
+
+        public UIntPosition Max(int xMax, int yMax, int zMax) =>
+            new UIntPosition(x < xMax ? xMax : x, y < yMax ? yMax : y, z < zMax ? zMax : z);
+
+        #endregion
+
+        #region Min
+
+        public UIntPosition MinX(int min) => x > min ? new UIntPosition(min, y, z) : this;
+        public UIntPosition MinY(int min) => y > min ? new UIntPosition(x, min, z) : this;
+        public UIntPosition MinZ(int min) => z > min ? new UIntPosition(x, y, min) : this;
+
+
+        public UIntPosition Min(UIntPosition min) => Min(min.x, min.y, min.z);
+
+        public UIntPosition Min(int xMin, int yMin, int zMin) =>
+            new UIntPosition(x > xMin ? xMin : x, y > yMin ? yMin : y, z > zMin ? zMin : z);
+
+        #endregion
+
+        #region Clamp
+
+        public UIntPosition ClampX(int min, int max) => MinX(max).MaxX(max);
+        public UIntPosition ClampY(int min, int max) => MinY(min).MaxY(max);
+        public UIntPosition ClampZ(int min, int max) => MinZ(min).MaxZ(max);
+        public UIntPosition Clamp(UIntPosition min, UIntPosition max) => Min(min).Max(max);
+
+        public UIntPosition Clamp(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) =>
+            Min(xMin, yMin, zMin).Max(xMax, yMax, yMax);
+
+        #endregion
+
+
         public void Deconstruct(out int px, out int py, out int pz) {
             px = x;
             py = y;
             pz = z;
+        }
+
+        public override string ToString() {
+            return $"UIntPosition ({x}, {y}, {z})";
         }
     }
 }
