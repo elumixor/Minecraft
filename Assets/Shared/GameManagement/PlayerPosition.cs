@@ -15,7 +15,6 @@ namespace Shared.GameManagement {
             set {
                 if (currentChunk != value) {
                     var diff = value - currentChunk;
-                    Debug.Log($"chunk changed! {currentChunk} to {value}, diff = {diff}");
                     if (diff.x != 0) {
                         for (var z = -1; z <= 1; z++)
                         for (var y = -1; y <= 1; y++) {
@@ -49,7 +48,7 @@ namespace Shared.GameManagement {
 
         // global position wrt Position and ChunkPosition
         public static UIntPosition GlobalPosition {
-            get => Map.GlobalPosition(Position, currentChunk);
+            get => Map.ToGlobalPosition(Position, currentChunk);
             set {
                 CurrentChunk = UIntPosition.Floor((Vector3) value / Map.ChunkSize);
                 Position = value - currentChunk * Map.ChunkSize;

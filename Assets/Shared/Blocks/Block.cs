@@ -3,6 +3,7 @@ using Shared.GameManagement;
 using Shared.Pooling;
 using Shared.SpaceWrapping;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 namespace Shared.Blocks {
     [RequireComponent(typeof(MeshRenderer))]
@@ -12,10 +13,20 @@ namespace Shared.Blocks {
         private Vector3Int position;
         private UIntPosition chunkPosition;
 
+        private int adjoiningBlocksCount;
+        private void AddAdjoiningBlock() {
+            adjoiningBlocksCount++;
+            if (adjoiningBlocksCount == 6) gameObject.SetActive(false);
+        }
+
+        private void RemoveAdjoiningBlock() {
+            adjoiningBlocksCount--;
+            if (adjoiningBlocksCount < 6) gameObject.SetActive(true);
+        }
+
         private const string PoolTag = "Block";
 
-        private static SortedDictionary<long, SortedDictionary<int, GameObject>> blocks =
-            new SortedDictionary<long, SortedDictionary<int, GameObject>>();
+        private static readonly MapStorage<Block> BlocksStorage = new MapStorage<Block>();
 
         public BlockType BlockType {
             get => blockType;
@@ -50,65 +61,75 @@ namespace Shared.Blocks {
         public static bool Add(BlockType blockType, Vector3Int position, bool replaceExisting = false) =>
             Add(blockType, position, PlayerPosition.CurrentChunk, replaceExisting);
 
-        public static bool Add(BlockType blockType, Vector3Int position, UIntPosition chunkPosition, bool replaceExisting = false) {
+        public static bool Add(BlockType blockType, Vector3Int position, UIntPosition chunkPosition,
+            bool replaceExisting = false) {
             var chunkIndex = chunkPosition.Index;
-            if (!blocks.TryGetValue(chunkIndex, out var chunk)) blocks[chunkIndex] = chunk = new SortedDictionary<int, GameObject>();
+            if (!BlocksStorage.TryGetValue(chunkIndex, out var chunk))
+                BlocksStorage[chunkIndex] = chunk = new SortedDictionary<int, Block>();
 
             var positionIndex = Map.IndexInChunk(position);
 
-            if (replaceExisting) {
-                var obj = Pooler.Request(PoolTag);
-                obj.GetComponent<Block>().Init(blockType, position, chunkPosition);
-                chunk[positionIndex] = obj;
-                return true;
-            } else {
-                if (chunk.ContainsKey(positionIndex)) return false;
+            if (!replaceExisting && chunk.ContainsKey(positionIndex)) return false;
 
-                var obj = Pooler.Request(PoolTag);
-                obj.GetComponent<Block>().Init(blockType, position, chunkPosition);
-                chunk[positionIndex] = obj;
-                return true;
+            var obj = Pooler.Request(PoolTag);
+            var blockComponent = obj.GetComponent<Block>();
+            blockComponent.Init(blockType, position, chunkPosition);
+            chunk[positionIndex] = blockComponent;
+
+            var globalPosition = Map.ToGlobalPosition(position, chunkPosition);
+            foreach (var vector in UIntPosition.AdjoiningVectors) {
+                var (checkedPosition, checkedChunk) = Map.FromGlobalPosition(globalPosition + vector);
+
+                if (BlocksStorage.TryGetValue(checkedChunk.Index, Map.IndexInChunk(checkedPosition), out var block)) {
+                    blockComponent.AddAdjoiningBlock();
+                    block.AddAdjoiningBlock();
+                }
             }
+
+            return true;
         }
-        
+
         public static bool Remove(Block block) {
-            var chunkIndex = PlayerPosition.CurrentChunk.Index;
             var positionIndex = Map.IndexInChunk(block.position);
 
+            var globalPosition = Map.ToGlobalPosition(block.position, block.chunkPosition);
+
+            foreach (var vector in UIntPosition.AdjoiningVectors) {
+                var (checkedPosition, checkedChunk) = Map.FromGlobalPosition(globalPosition + vector);
+
+                if (BlocksStorage.TryGetValue(checkedChunk.Index, Map.IndexInChunk(checkedPosition),
+                    out var adjoiningBlock)) {
+                    block.RemoveAdjoiningBlock();
+                    adjoiningBlock.RemoveAdjoiningBlock();
+                }
+            }
+
             // todo: this assumes that block is registered in map, thus may throw exception.. which is ok?
-            var chunk = blocks[chunkIndex];
+            var chunk = BlocksStorage[block.chunkPosition.Index];
             var obj = chunk[positionIndex];
-            Pooler.Return(PoolTag, obj);
+            Pooler.Return(PoolTag, obj.gameObject);
             chunk.Remove(positionIndex);
             return true;
         }
 
         public static bool Remove(Vector3Int position) => Remove(position, PlayerPosition.CurrentChunk);
 
-        public static bool Remove(Vector3Int position, UIntPosition chunkPosition) {
-            var chunkIndex = chunkPosition.Index;
-            if (!blocks.TryGetValue(chunkIndex, out var chunk)) return false;
-
-            var positionIndex = Map.IndexInChunk(position);
-            if (!chunk.ContainsKey(positionIndex)) return false;
-
-            var obj = chunk[positionIndex];
-            Pooler.Return(PoolTag, obj);
-            chunk.Remove(positionIndex);
-            return true;
-        }
+        public static bool Remove(Vector3Int position, UIntPosition chunkPosition) =>
+            !BlocksStorage.TryGetValue(chunkPosition.Index, Map.IndexInChunk(position), out var block) || Remove(block);
 
         private void Awake() => meshRenderer = GetComponent<MeshRenderer>();
         private void Reset() => Awake();
 
         private void Init(BlockType bType, Vector3Int pos, UIntPosition chunkPos) {
+            adjoiningBlocksCount = 0;
+            gameObject.SetActive(true);
             BlockType = bType;
             Position = pos;
             ChunkPosition = chunkPos;
         }
 
         private void UpdatePosition() =>
-            transform.position = (Vector3) Map.GlobalPosition(position, chunkPosition) * Settings.GridUnitWidth;
+            transform.position = (Vector3) Map.ToGlobalPosition(position, chunkPosition) * Settings.GridUnitWidth;
 
         public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) =>
             position + Vector3Int.RoundToInt(hitNormal);

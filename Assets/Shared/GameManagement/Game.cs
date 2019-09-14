@@ -124,7 +124,7 @@ namespace Shared.GameManagement {
         /// Read game data from file
         /// </summary>
         private static void ReadFile(BinaryReader reader,
-            out MapStorage map, out (int x, int y) zero, out (int x, int y, int z) playerPosition) {
+            out MapStorage<BlockType> map, out (int x, int y) zero, out (int x, int y, int z) playerPosition) {
             var px = reader.ReadInt32();
             var py = reader.ReadInt32();
             var pz = reader.ReadInt32();
@@ -138,7 +138,7 @@ namespace Shared.GameManagement {
 
             var count = reader.ReadInt32();
 
-            map = new MapStorage();
+            map = new MapStorage<BlockType>();
 
             for (var i = 0; i < count; i++) {
                 var chunkIndex = reader.ReadInt64();

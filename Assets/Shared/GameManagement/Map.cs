@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using JetBrains.Annotations;
 using Shared.Blocks;
 using Shared.SingletonBehaviour;
@@ -25,7 +26,7 @@ namespace Shared.GameManagement {
         /// <summary>
         /// Map storage
         /// </summary>
-        public static MapStorage Storage { get; private set; } = new MapStorage();
+        public static MapStorage<BlockType> Storage { get; private set; } = new MapStorage<BlockType>();
 
         [SerializeField, Range(0, ChunkSize)] private int waterLevel = 10;
         [SerializeField, Range(0, ChunkSize)] private int sandDepth = 2;
@@ -40,18 +41,17 @@ namespace Shared.GameManagement {
         // Public API
 
         public static SortedDictionary<int, BlockType> GetChunk(UIntPosition position,
-            bool generateIfMissing = true, bool overwrite = true) {
+            bool generateIfMissing = true) {
             var index = position.Index;
-            if (Storage.TryGetValue(index, out var chunk)) return overwrite ? GenerateChunk(position) : chunk;
+            if (Storage.TryGetValue(index, out var chunk)) return chunk;
 
             return !generateIfMissing ? null : GenerateChunk(position);
         }
 
         // Generate new chunk at xyz coordinate in chunk coordinates
-        public static SortedDictionary<int, BlockType> GenerateChunk(UIntPosition position, bool overwrite = true) {
+        public static SortedDictionary<int, BlockType> GenerateChunk(UIntPosition position) {
             var pos = position.MaxY(0);
             var chunkIndex = pos.Index;
-            if (Storage.TryGetValue(chunkIndex, out var chunk) && !overwrite) return chunk;
 
             switch (pos.y) {
                 case 1:
@@ -72,20 +72,29 @@ namespace Shared.GameManagement {
             }
         }
 
-        public static void CreateFrom(MapStorage mapData) => Storage = mapData;
+        public static void CreateFrom(MapStorage<BlockType> mapData) => Storage = mapData;
 
         // Get block at current chunk
-        [Pure, CanBeNull]
+        [JetBrains.Annotations.Pure, CanBeNull]
+        public static BlockType? GetBlockGlobal(UIntPosition globalPosition) {
+            var (position, chunkPosition) = FromGlobalPosition(globalPosition);
+            return GetBlock(position, chunkPosition);
+        }
+        [JetBrains.Annotations.Pure, CanBeNull]
         public static BlockType? GetBlock(Vector3Int position) => GetBlock(position, PlayerPosition.CurrentChunk);
 
         // Get block at specific chunk
-        [Pure, CanBeNull]
+        [JetBrains.Annotations.Pure, CanBeNull]
         public static BlockType? GetBlock(Vector3Int position, UIntPosition chunkPosition) =>
             Storage.TryGetValue(chunkPosition.Index, out var chunk)
                 ? chunk.TryGetValue(IndexInChunk(position), out var blockType) ? (BlockType?) blockType : null
                 : null;
 
         // Set or remove block at current chunk
+        public static void SetBlockGlobal(BlockType blockType, UIntPosition globalPosition) {
+            var (position, chunkPosition) = FromGlobalPosition(globalPosition);
+            SetBlock(blockType, position, chunkPosition);
+        }
         public static void SetBlock(BlockType blockType, Vector3Int position) =>
             SetBlock(blockType, position, PlayerPosition.CurrentChunk);
 
@@ -108,12 +117,19 @@ namespace Shared.GameManagement {
             return new Vector3Int(x, y, z);
         }
 
-        public static UIntPosition GlobalPosition(Vector3Int position) => GlobalPosition(position, PlayerPosition.CurrentChunk);
+        public static (Vector3Int position, UIntPosition chunkPosition) FromGlobalPosition(UIntPosition position) {
+            var chunkPosition = UIntPosition.Floor((Vector3) position / ChunkSize);
+            var positionInChunk = position - chunkPosition * ChunkSize;
+            return (positionInChunk, chunkPosition);
+        }
 
-        public static UIntPosition GlobalPosition(Vector3Int position, UIntPosition chunkPosition) =>
+        public static UIntPosition ToGlobalPosition(Vector3Int position) =>
+            ToGlobalPosition(position, PlayerPosition.CurrentChunk);
+        public static UIntPosition ToGlobalPosition(Vector3Int position, UIntPosition chunkPosition) =>
             chunkPosition * ChunkSize + (UIntPosition) position;
 
-        public static void InstantiateChunk(UIntPosition chunkPosition) => InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
+        public static void InstantiateChunk(UIntPosition chunkPosition) =>
+            InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
 
         public static void InstantiateChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
 //            IEnumerator MC() {

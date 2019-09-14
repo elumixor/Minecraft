@@ -14,7 +14,7 @@ namespace Shared.Pooling {
 
         [SerializeField] private List<Pool> pools;
         private Dictionary<string, (GameObject prefab, Queue<GameObject> queue)> poolsDictionary;
-        
+
         // Public API
 
         /// <summary>
@@ -54,6 +54,8 @@ namespace Shared.Pooling {
         /// </summary>
         protected override void Awake() {
             base.Awake();
+
+            if (Application.isPlaying) transform.DestroyAllChildren();
 
             poolsDictionary = new Dictionary<string, (GameObject prefab, Queue<GameObject> queue)>(pools.Count);
 
