@@ -113,9 +113,13 @@ namespace Shared.SpaceWrapping {
 
         public static implicit operator UIntPosition(Vector3Int position) => new UIntPosition(position.x, position.y, position.z);
 
-        public static implicit operator Vector3(UIntPosition position) => new Vector3Int(position.x, position.y, position.z);
+        public static implicit operator Vector3(UIntPosition position) => new Vector3(position.x, position.y, position.z);
 
-        public static implicit operator UIntPosition(Vector3 position) =>
+        public static UIntPosition Ceil(Vector3 position) => 
+            new UIntPosition(Mathf.CeilToInt(position.x), Mathf.CeilToInt(position.y), Mathf.CeilToInt(position.z));
+        public static UIntPosition Floor(Vector3 position) => 
+            new UIntPosition(Mathf.FloorToInt(position.x), Mathf.FloorToInt(position.y), Mathf.FloorToInt(position.z));
+        public static UIntPosition Round(Vector3 position) => 
             new UIntPosition(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y), Mathf.RoundToInt(position.z));
 
         #endregion

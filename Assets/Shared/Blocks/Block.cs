@@ -104,7 +104,7 @@ namespace Shared.Blocks {
         private void Init(BlockType bType, Vector3Int pos, UIntPosition chunkPos) {
             BlockType = bType;
             Position = pos;
-            chunkPosition = chunkPos;
+            ChunkPosition = chunkPos;
         }
 
         private void UpdatePosition() =>

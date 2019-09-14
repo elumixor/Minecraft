@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Shared.Blocks;
@@ -38,8 +39,8 @@ namespace Shared.GameManagement {
 
         // Public API
 
-        public static SortedDictionary<int, BlockType>
-            GetChunk(UIntPosition position, bool generateIfMissing = true, bool overwrite = true) {
+        public static SortedDictionary<int, BlockType> GetChunk(UIntPosition position,
+            bool generateIfMissing = true, bool overwrite = true) {
             var index = position.Index;
             if (Storage.TryGetValue(index, out var chunk)) return overwrite ? GenerateChunk(position) : chunk;
 
@@ -115,11 +116,19 @@ namespace Shared.GameManagement {
         public static void InstantiateChunk(UIntPosition chunkPosition) => InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
 
         public static void InstantiateChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
-            foreach (var kvp in chunk) Block.Add(kvp.Value, FromChunkIndex(kvp.Key), chunkPosition);
+//            IEnumerator MC() {
+            foreach (var kvp in chunk) {
+                Block.Add(kvp.Value, FromChunkIndex(kvp.Key), chunkPosition);
+//                    yield return null;
+            }
+//            }
+
+//            Instance.StartCoroutine(MC());
         }
 
-        public static void DestroyChunk(UIntPosition chunkPosition) =>
-            DestroyChunk(Storage[chunkPosition.MaxY(0).Index], chunkPosition.MaxY(0));
+        public static void DestroyChunk(UIntPosition chunkPosition) {
+            if (Storage.TryGetValue(chunkPosition.Index, out var chunk)) DestroyChunk(chunk, chunkPosition);
+        }
 
         public static void DestroyChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
             foreach (var kvp in chunk) Block.Remove(FromChunkIndex(kvp.Key), chunkPosition);

@@ -15,26 +15,30 @@ namespace Shared.GameManagement {
             set {
                 if (currentChunk != value) {
                     var diff = value - currentChunk;
+                    Debug.Log($"chunk changed! {currentChunk} to {value}, diff = {diff}");
                     if (diff.x != 0) {
                         for (var z = -1; z <= 1; z++)
                         for (var y = -1; y <= 1; y++) {
                             Map.DestroyChunk(currentChunk + new UIntPosition(-diff.x, y, z));
                             var pos = value + new UIntPosition(diff.x, y, z);
-                            Map.InstantiateChunk(Map.GetChunk(pos), pos);
+                            if (pos.y >= 0)
+                                Map.InstantiateChunk(Map.GetChunk(pos), pos);
                         }
                     } else if (diff.y != 0) {
                         for (var z = -1; z <= 1; z++)
                         for (var x = -1; x <= 1; x++) {
                             Map.DestroyChunk(currentChunk + new UIntPosition(x, -diff.y, z));
                             var pos = value + new UIntPosition(x, diff.y, z);
-                            Map.InstantiateChunk(Map.GetChunk(pos), pos);
+                            if (pos.y >= 0)
+                                Map.InstantiateChunk(Map.GetChunk(pos), pos);
                         }
                     } else if (diff.z != 0) {
                         for (var y = -1; y <= 1; y++)
                         for (var x = -1; x <= 1; x++) {
                             Map.DestroyChunk(currentChunk + new UIntPosition(x, y, -diff.z));
                             var pos = value + new UIntPosition(x, y, diff.z);
-                            Map.InstantiateChunk(Map.GetChunk(pos), pos);
+                            if (pos.y >= 0)
+                                Map.InstantiateChunk(Map.GetChunk(pos), pos);
                         }
                     }
 
@@ -47,7 +51,7 @@ namespace Shared.GameManagement {
         public static UIntPosition GlobalPosition {
             get => Map.GlobalPosition(Position, currentChunk);
             set {
-                CurrentChunk = value / Map.ChunkSize;
+                CurrentChunk = UIntPosition.Floor((Vector3) value / Map.ChunkSize);
                 Position = value - currentChunk * Map.ChunkSize;
             }
         }

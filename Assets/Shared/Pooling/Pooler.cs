@@ -14,8 +14,6 @@ namespace Shared.Pooling {
 
         [SerializeField] private List<Pool> pools;
         private Dictionary<string, (GameObject prefab, Queue<GameObject> queue)> poolsDictionary;
-
-        private static Transform objectsContainer;
         
         // Public API
 
@@ -29,7 +27,7 @@ namespace Shared.Pooling {
                 return null;
             }
 
-            var gameObject = kvp.queue.Count == 0 ? ExpandQueue(kvp.queue, kvp.prefab) : kvp.queue.Dequeue();
+            var gameObject = kvp.queue.Count == 0 ? ExpandQueue(kvp.prefab) : kvp.queue.Dequeue();
             foreach (var handler in gameObject.GetComponents<IPoolRequestHandler>()) handler.OnPoolRequested();
             gameObject.SetActive(true);
             return gameObject;
@@ -43,7 +41,7 @@ namespace Shared.Pooling {
                 Debug.LogWarning($"Pool with tag '{tag}' does not exist.");
                 return;
             }
-            
+
             foreach (var handler in gameObject.GetComponents<IPoolReturnHandler>()) handler.OnPoolReturned();
             gameObject.SetActive(false);
             kvp.queue.Enqueue(gameObject);
@@ -57,24 +55,18 @@ namespace Shared.Pooling {
         protected override void Awake() {
             base.Awake();
 
-            objectsContainer = new GameObject("Pool objects container").transform;
-            DontDestroyOnLoad(objectsContainer);
-
             poolsDictionary = new Dictionary<string, (GameObject prefab, Queue<GameObject> queue)>(pools.Count);
 
             foreach (var pool in pools) {
                 var queue = new Queue<GameObject>(pool.size);
                 poolsDictionary[pool.tag] = (pool.prefab, queue);
-                for (var i = 0; i < pool.size; i++) ExpandQueue(queue, pool.prefab);
+                for (var i = 0; i < pool.size; i++) ExpandQueue(pool.prefab);
             }
         }
 
-        private void OnApplicationQuit() => Destroy(objectsContainer.gameObject);
-
-        private static GameObject ExpandQueue(Queue<GameObject> queue, GameObject prefab) {
-            var gameObject = Instantiate(prefab, objectsContainer, true);
+        private static GameObject ExpandQueue(GameObject prefab) {
+            var gameObject = Instantiate(prefab, Instance.transform, true);
             gameObject.SetActive(false);
-            queue.Enqueue(gameObject);
             return gameObject;
         }
     }

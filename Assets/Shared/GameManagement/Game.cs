@@ -59,16 +59,21 @@ namespace Shared.GameManagement {
                     Map.InstantiateChunk(mapChunk, pos);
                 }
 
-                var centralChunk = Map.GetChunk(new UIntPosition(0,1,0));
-                var playerY = 0;
-                while (centralChunk.ContainsKey(Map.IndexInChunk(0, playerY, 0))) {
-                    playerY++;
+                for (var chunkY = 1;; chunkY++) {
+                    var chunk = Map.GetChunk(new UIntPosition(0, chunkY, 0));
+                    
+                    for (var z = 0; z < Map.ChunkSize; z++)
+                    for (var x = 0; x < Map.ChunkSize; x++)
+                    for (var y = 0; y < Map.ChunkSize; y++) {
+                        if (!chunk.ContainsKey(Map.IndexInChunk(x, y, z))) {
+                            PlayerPosition.CurrentChunk = (0, chunkY, 0);
+                            PlayerPosition.Position = new Vector3Int(x, y, z);
+
+                            onLoaded = null;
+                            return;
+                        }
+                    }
                 }
-
-                PlayerPosition.CurrentChunk = (0, 1, 0);
-                PlayerPosition.Position = new Vector3Int(0, Map.ChunkSize + playerY, 0);
-
-                onLoaded = null;
             };
         }
 
