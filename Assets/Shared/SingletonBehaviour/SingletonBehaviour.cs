@@ -8,7 +8,8 @@ namespace Shared.SingletonBehaviour {
     /// <typeparam name="T"></typeparam>
     [ExecuteInEditMode]
     public class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T> {
-        private static object @lock = new object();
+        // ReSharper disable once StaticMemberInGenericType
+        private static readonly object Lock = new object();
         private static T instance;
 
         private static void AssignInstance() {
@@ -16,7 +17,8 @@ namespace Shared.SingletonBehaviour {
             if (instances.Length > 1) {
                 instance = instances[0];
                 for (var i = 1; i < instances.Length; i++) {
-                    Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {instances[i]}");
+                    Debug.LogWarning(
+                        $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {instances[i]}");
                     DestroyImmediate(instances[i]);
                 }
             } else if (instances.Length == 1)
@@ -25,14 +27,16 @@ namespace Shared.SingletonBehaviour {
                 instance = new GameObject($"{typeof(T)} (Singleton)").AddComponent<T>();
         }
 
+        // todo: Replace existing singleton behaviour in scene
         protected virtual void Awake() {
-            lock (@lock)
+            lock (Lock)
                 if (instance == null) {
                     AssignInstance();
                     instance = (T) this;
                     if (EditorApplication.isPlaying) DontDestroyOnLoad(this);
                 } else if (instance != this) {
-                    Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {this}");
+                    Debug.LogWarning(
+                        $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {this}");
                     if (EditorApplication.isPlaying) Destroy(this);
                     else DestroyImmediate(this);
                 }
@@ -40,7 +44,7 @@ namespace Shared.SingletonBehaviour {
 
         protected static T Instance {
             get {
-                lock (@lock) {
+                lock (Lock) {
                     if (instance == null) AssignInstance();
                     return instance;
                 }
@@ -48,7 +52,7 @@ namespace Shared.SingletonBehaviour {
         }
 
         private void OnDestroy() {
-            lock (@lock) instance = null;
+            lock (Lock) instance = null;
         }
     }
 }

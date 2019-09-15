@@ -1,9 +1,10 @@
+using Shared.Positioning;
 using UnityEngine;
 //using Scenes.WorldScene.BlockSelection;
 
 namespace Shared {
     public interface IBuildable {
-        Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal);
+        WorldPosition GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal);
     }
 
 //    public static class BuildableExtensions {

@@ -1,4 +1,5 @@
 using Shared;
+using Shared.Positioning;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
@@ -25,10 +26,9 @@ namespace Scenes.WorldScene.Floor {
             tr.rotation = Quaternion.Euler(rot);
         }
 
-        public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) {
-            var p = Vector3Int.RoundToInt(hitPoint);
-            p.y = 0;
-            return p;
+        public WorldPosition GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) {
+            hitPoint.y = 0;
+            return (WorldPosition) hitPoint;
         }
     }
 }

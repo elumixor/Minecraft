@@ -1,173 +1,122 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using JetBrains.Annotations;
 using Shared.Blocks;
+using Shared.Positioning;
 using Shared.SingletonBehaviour;
-using Shared.SpaceWrapping;
 using UnityEngine;
 
 namespace Shared.GameManagement {
+    /// <summary>
+    /// Manages map data - stores, generates and modifies block types at specific coordinates
+    /// </summary>
     public class Map : SingletonBehaviour<Map> {
         /// <summary>
-        /// Size of terrain block (x, y, and z size)
+        /// Map zero. Used to correctly offset generated chunks
         /// </summary>
-        public const int ChunkSize = 20;
-
-        /// <summary>
-        /// Coordinate zero at global coordinates
-        /// <remarks>
-        ///    Setter does not preserve existing blocks and their positions. It should be 
-        /// </remarks>
-        /// </summary>
-        public static (int x, int y) Zero { get; set; }
+        public static (int x, int y) zero;
 
         /// <summary>
         /// Map storage
         /// </summary>
-        public static MapStorage<BlockType> Storage { get; private set; } = new MapStorage<BlockType>();
+        public static MapStorage<BlockType> storage = new MapStorage<BlockType>();
 
-        [SerializeField, Range(0, ChunkSize)] private int waterLevel = 10;
-        [SerializeField, Range(0, ChunkSize)] private int sandDepth = 2;
-        [SerializeField, Range(0, ChunkSize)] private int groundDepth = 3;
-        [SerializeField, Range(0, ChunkSize)] private int groundUnderwaterDepth = 1;
+        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int waterLevel = 10;
+        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int sandDepth = 2;
+        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int groundDepth = 3;
+        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int groundUnderwaterDepth = 1;
 
         [SerializeField, Range(1, 5)] private int octaves = 2;
         [SerializeField, Range(0.0001f, 100f)] private float scale = 10f;
         [SerializeField, Range(0.0001f, 1)] private float persistance = 0.5f;
         [SerializeField, Range(0.0001f, 5)] private float lacunarity = 2f;
 
-        // Public API
+        /// <summary>
+        /// Gets chunk of blocks in map.
+        /// </summary>
+        /// <remarks>
+        /// If generateIfMissing is set to true will generate new chunk, if no chunk was
+        /// previously generated and will return generated chunk.
+        /// </remarks>
+        /// <param name="position">Chunk position</param>
+        /// <param name="generateIfMissing">Generate new chunk if no chunk was found</param>
+        /// <returns>Chunk of block types at chunk position or null if no chunk was generated
+        /// and generateIfMissing is set to false</returns>
+        public static MapStorage<BlockType>.Chunk GetChunk(WorldPosition.ChunkPosition position,
+            bool generateIfMissing = true) =>
+            storage.TryGetChunk(position, out var chunk)
+                ? chunk
+                : generateIfMissing
+                    ? GenerateChunk(position)
+                    : null;
+        /// <summary>
+        /// Gets block type at position
+        /// </summary>
+        /// <param name="position">Position of block</param>
+        /// <param name="blockType">Retrieved block type, if block existed at position</param>
+        /// <returns>True if block exists, else false</returns>
+        public static bool TryGetBlock(WorldPosition position, out BlockType blockType) =>
+            storage.TryGetValue(position, out blockType);
+        /// <summary>
+        /// Sets specific block in map
+        /// </summary>
+        /// <param name="blockType">Block type</param>
+        /// <param name="position">World position of block</param>
+        public static void SetBlock(BlockType blockType, WorldPosition position) => storage[position] = blockType;
+        /// <summary>
+        /// Removes block in map
+        /// </summary>
+        public static bool Remove(WorldPosition position) => storage.Remove(position);
 
-        public static SortedDictionary<int, BlockType> GetChunk(UIntPosition position,
-            bool generateIfMissing = true) {
-            var index = position.Index;
-            if (Storage.TryGetValue(index, out var chunk)) return chunk;
+        #region Private helper methods
+        /// <summary>
+        /// Generates new chunk at chunk position and saves it to <see cref="storage"/>
+        /// </summary>
+        /// <param name="position">Chunk position</param>
+        /// <returns>Generated chunk</returns>
+        private static MapStorage<BlockType>.Chunk GenerateChunk(WorldPosition.ChunkPosition position) {
+            Debug.Assert(position.y >= 0, $"Tried to generate chunk at negative y coordinate: {position}");
 
-            return !generateIfMissing ? null : GenerateChunk(position);
-        }
-
-        // Generate new chunk at xyz coordinate in chunk coordinates
-        public static SortedDictionary<int, BlockType> GenerateChunk(UIntPosition position) {
-            var pos = position.MaxY(0);
-            var chunkIndex = pos.Index;
-
-            switch (pos.y) {
+            switch (position.y) {
                 case 1:
-                    return Storage[chunkIndex] = TerrainToBlockMap(PerlinMap(pos.x, pos.z));
+                    return storage[position] = TerrainToBlockMap(GenerateHeightMap(position.x, position.z));
                 case 0: {
-                    var rockChunk = new SortedDictionary<int, BlockType>();
-                    for (var z = 0; z < ChunkSize; z++)
-                    for (var y = 0; y < ChunkSize; y++)
-                    for (var x = 0; x < ChunkSize; x++)
-                        rockChunk[IndexInChunk(x, y, z)] = BlockType.Rock;
+                    var rockChunk = new MapStorage<BlockType>.Chunk();
+                    for (var pz = 0u; pz < WorldPosition.ChunkSize; pz++)
+                    for (var py = 0u; py < WorldPosition.ChunkSize; py++)
+                    for (var px = 0u; px < WorldPosition.ChunkSize; px++)
+                        rockChunk[new WorldPosition.LocalPosition(px, py, pz)] = BlockType.Rock;
 
-                    return Storage[chunkIndex] = rockChunk;
+                    return storage[position] = rockChunk;
                 }
                 default:
                     // todo: generate clouds? :)
                     // empty chunk, as we are in air
-                    return Storage[chunkIndex] = new SortedDictionary<int, BlockType>();
+                    return storage[position] = new MapStorage<BlockType>.Chunk();
             }
         }
+        /// <summary>
+        /// Generates height map using perlin noise algorithm
+        /// </summary>
+        /// <param name="xOffset">X offset</param>
+        /// <param name="yOffset">Y Offset</param>
+        private static float[,] GenerateHeightMap(float xOffset, float yOffset) {
+            var offsetX = (zero.x + xOffset) * WorldPosition.ChunkSize;
+            var offsetY = (zero.y + yOffset) * WorldPosition.ChunkSize;
 
-        public static void CreateFrom(MapStorage<BlockType> mapData) => Storage = mapData;
-
-        // Get block at current chunk
-        [JetBrains.Annotations.Pure, CanBeNull]
-        public static BlockType? GetBlockGlobal(UIntPosition globalPosition) {
-            var (position, chunkPosition) = FromGlobalPosition(globalPosition);
-            return GetBlock(position, chunkPosition);
-        }
-        [JetBrains.Annotations.Pure, CanBeNull]
-        public static BlockType? GetBlock(Vector3Int position) => GetBlock(position, PlayerPosition.CurrentChunk);
-
-        // Get block at specific chunk
-        [JetBrains.Annotations.Pure, CanBeNull]
-        public static BlockType? GetBlock(Vector3Int position, UIntPosition chunkPosition) =>
-            Storage.TryGetValue(chunkPosition.Index, out var chunk)
-                ? chunk.TryGetValue(IndexInChunk(position), out var blockType) ? (BlockType?) blockType : null
-                : null;
-
-        // Set or remove block at current chunk
-        public static void SetBlockGlobal(BlockType blockType, UIntPosition globalPosition) {
-            var (position, chunkPosition) = FromGlobalPosition(globalPosition);
-            SetBlock(blockType, position, chunkPosition);
-        }
-        public static void SetBlock(BlockType blockType, Vector3Int position) =>
-            SetBlock(blockType, position, PlayerPosition.CurrentChunk);
-
-        // Set or remove block at specific chunk
-        public static void SetBlock(BlockType blockType, Vector3Int position, UIntPosition chunkPosition) =>
-            Storage[chunkPosition.Index][IndexInChunk(position)] = blockType;
-
-        public static void Remove(Vector3Int position) => Remove(position, PlayerPosition.CurrentChunk);
-
-        public static void Remove(Vector3Int position, UIntPosition chunkPosition) =>
-            Storage[chunkPosition.Index].Remove(IndexInChunk(position));
-
-        public static int IndexInChunk(int x, int y, int z) => x * ChunkSize * ChunkSize + y * ChunkSize + z;
-        public static int IndexInChunk(Vector3Int position) => IndexInChunk(position.x, position.y, position.z);
-
-        private static Vector3Int FromChunkIndex(int i) {
-            var x = i / (ChunkSize * ChunkSize);
-            var y = (i - x * ChunkSize * ChunkSize) / ChunkSize;
-            var z = i - x * ChunkSize * ChunkSize - y * ChunkSize;
-            return new Vector3Int(x, y, z);
-        }
-
-        public static (Vector3Int position, UIntPosition chunkPosition) FromGlobalPosition(UIntPosition position) {
-            var chunkPosition = UIntPosition.Floor((Vector3) position / ChunkSize);
-            var positionInChunk = position - chunkPosition * ChunkSize;
-            return (positionInChunk, chunkPosition);
-        }
-
-        public static UIntPosition ToGlobalPosition(Vector3Int position) =>
-            ToGlobalPosition(position, PlayerPosition.CurrentChunk);
-        public static UIntPosition ToGlobalPosition(Vector3Int position, UIntPosition chunkPosition) =>
-            chunkPosition * ChunkSize + (UIntPosition) position;
-
-        public static void InstantiateChunk(UIntPosition chunkPosition) =>
-            InstantiateChunk(Storage[chunkPosition.Index], chunkPosition);
-
-        public static void InstantiateChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
-//            IEnumerator MC() {
-            foreach (var kvp in chunk) {
-                Block.Add(kvp.Value, FromChunkIndex(kvp.Key), chunkPosition);
-//                    yield return null;
-            }
-//            }
-
-//            Instance.StartCoroutine(MC());
-        }
-
-        public static void DestroyChunk(UIntPosition chunkPosition) {
-            if (Storage.TryGetValue(chunkPosition.Index, out var chunk)) DestroyChunk(chunk, chunkPosition);
-        }
-
-        public static void DestroyChunk(SortedDictionary<int, BlockType> chunk, UIntPosition chunkPosition) {
-            foreach (var kvp in chunk) Block.Remove(FromChunkIndex(kvp.Key), chunkPosition);
-        }
-
-        private static float[,] PerlinMap(int xOffset, int yOffset) {
-            var offsetX = (Zero.x + xOffset) * ChunkSize;
-            var offsetY = (Zero.y + yOffset) * ChunkSize;
-
-            var points = new float[ChunkSize, ChunkSize];
+            var points = new float[WorldPosition.ChunkSize, WorldPosition.ChunkSize];
 
             var minHeight = float.MaxValue;
             var maxHeight = float.MinValue;
 
-            for (var y = 0; y < ChunkSize; y++)
-            for (var x = 0; x < ChunkSize; x++) {
+            for (var y = 0; y < WorldPosition.ChunkSize; y++)
+            for (var x = 0; x < WorldPosition.ChunkSize; x++) {
                 var amplitude = 1f;
                 var frequency = 1f;
                 var noiseHeight = 0f;
 
                 for (var i = 0; i < Instance.octaves; i++) {
-                    var xValue = (x + (float) offsetX) / Instance.scale * frequency;
-                    var yValue = (y + (float) offsetY) / Instance.scale * frequency;
+                    var xValue = (x + offsetX) / Instance.scale * frequency;
+                    var yValue = (y + offsetY) / Instance.scale * frequency;
                     noiseHeight += (Mathf.PerlinNoise(xValue, yValue) * 2 - 1) * amplitude;
 
                     amplitude *= Instance.persistance;
@@ -180,29 +129,36 @@ namespace Shared.GameManagement {
                 points[x, y] = noiseHeight;
             }
 
-            for (var y = 0; y < ChunkSize; y++)
-            for (var x = 0; x < ChunkSize; x++) {
+            for (var y = 0; y < WorldPosition.ChunkSize; y++)
+            for (var x = 0; x < WorldPosition.ChunkSize; x++) {
                 points[x, y] = Mathf.InverseLerp(minHeight, maxHeight, points[x, y]);
             }
 
             return points;
         }
-
-        private static SortedDictionary<int, BlockType> TerrainToBlockMap(float[,] points) {
-            var blockPositions = new SortedDictionary<int, BlockType>();
+        /// <summary>
+        /// Generates <see cref="MapStorage{T}.Chunk"/> of <see cref="BlockType"/>s from height map
+        /// </summary>
+        /// <param name="points">Rectangular array of height values from 0 to 1</param>
+        private static MapStorage<BlockType>.Chunk TerrainToBlockMap(float[,] points) {
+            var blockPositions = new MapStorage<BlockType>.Chunk();
 
             var waterLevel = Instance.waterLevel;
             var groundDepth = Instance.groundDepth;
             var groundUnderwaterDepth = Instance.groundUnderwaterDepth;
             var sandDepth = Instance.sandDepth;
 
-            for (var z = 0; z < ChunkSize; z++)
-            for (var x = 0; x < ChunkSize; x++) {
+            for (var z = 0u; z < WorldPosition.ChunkSize; z++)
+            for (var x = 0u; x < WorldPosition.ChunkSize; x++) {
                 void Set(BlockType blockType, int from, int to) {
-                    for (var y = Math.Max(0, from); y < to; y++) blockPositions[IndexInChunk(x, y, z)] = blockType;
+                    for (var y = (uint) Math.Max(0, from); y < to; y++)
+                        blockPositions[new WorldPosition.LocalPosition(x, y, z)] = blockType;
                 }
 
-                var height = Mathf.RoundToInt(points[x, z] * ChunkSize);
+                Debug.Assert(points[x, z] >= 0 && points[x, z] <= 1,
+                    $"Point at [{x}, {z}] was out of range (0, 1): {points[x, z]}");
+
+                var height = Mathf.RoundToInt(points[x, z] * WorldPosition.ChunkSize);
 
                 if (height > waterLevel + groundDepth) {
                     Set(BlockType.Rock, 0, height - groundDepth);
@@ -223,5 +179,6 @@ namespace Shared.GameManagement {
 
             return blockPositions;
         }
+        #endregion
     }
 }

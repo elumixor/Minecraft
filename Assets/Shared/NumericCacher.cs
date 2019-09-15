@@ -3,12 +3,19 @@ using System.Collections.Generic;
 
 namespace Shared {
     public static class NumericCacher {
-        private static readonly Dictionary<long, long> SqrtDictionary = new Dictionary<long, long>();
-        public static long Sqrt(this long value) {
-            if (SqrtDictionary.ContainsKey(value)) return SqrtDictionary[value];
-            return SqrtDictionary[value] = (long) Math.Floor(Math.Sqrt(value));
-        }
-
-        public static int Sqrt(this int value) => (int) ((long) value).Sqrt();
+        private static readonly Dictionary<ulong, ulong> SqrtDictionary = new Dictionary<ulong, ulong>();
+        public static ulong Sqrt(this ulong value) =>
+            SqrtDictionary.TryGetValue(value, out var result)
+                ? result
+                : SqrtDictionary[value] = (ulong) Math.Floor(Math.Sqrt(value));
+        public static ulong Sqrt(this uint value) => ((ulong) value).Sqrt();
+        public static ulong Sqrt(this int value) =>
+            value < 0
+                ? throw new ArgumentOutOfRangeException(nameof(value), "Value should  be non-negative")
+                : ((long) value).Sqrt();
+        public static ulong Sqrt(this long value) =>
+            value < 0
+                ? throw new ArgumentOutOfRangeException(nameof(value), "Value should  be non-negative")
+                : ((ulong) value).Sqrt();
     }
 }

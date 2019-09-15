@@ -39,7 +39,7 @@ namespace Scenes.WorldScene {
 
         private void DestroySelectedBlock(Block block) {
             Map.Remove(block.Position);
-            Block.Remove(block);
+            Block.Destroy(block.Position);
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
@@ -70,14 +70,17 @@ namespace Scenes.WorldScene {
                 var buildPosition = buildable.GetBuildPosition(hit.point, hit.normal);
 
                 if (notDestroying) {
-                    previewCube.transform.position = buildPosition;
+                    previewCube.transform.position = (Vector3)buildPosition * Settings.GridUnitWidth;
                     previewCube.renderer.material.color =
                         BlockSelector.SelectedType.BlockData().material.color.SetAlpha(previewCube.opacity);
                     previewCube.renderer.enabled = true;
                 }
 
                 if (Input.GetMouseButtonDown(0)) {
-                    if (notDestroying) Settings.CreateBlockInstance(BlockSelector.SelectedType, buildPosition);
+                    if (notDestroying) {
+                        Map.SetBlock(BlockSelector.SelectedType, buildPosition);
+                        Block.Instantiate(BlockSelector.SelectedType, buildPosition);
+                    }
                     else if (objectHit.GetComponent<Block>() is var block && block != null) {
                         var now = Time.time;
                         destruction = (block, (now, now + block.BlockType.BlockData().durability));

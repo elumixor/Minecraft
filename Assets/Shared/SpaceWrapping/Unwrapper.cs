@@ -9,14 +9,14 @@ namespace Shared.SpaceWrapping {
         [SerializeField, Range(0.01f, 1f)] private float spawnTime;
 
         [Pure]
-        protected abstract void Unwrap(int i, out int x, out int y, out int z);
+        protected abstract void Unwrap(ulong i, out int x, out int y, out int z);
 
         [Pure]
-        protected abstract int Wrap(int x, int y, int z);
+        protected abstract ulong Wrap(int i, int y, int z);
 
         private bool shouldStop;
         private bool started;
-        private int i;
+        private ulong i;
 
         private void Start() {
             for (var z = -5; z <= 5; z++)

@@ -1,19 +1,19 @@
-using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
 using Shared.GameManagement;
 using Shared.Pooling;
-using Shared.SpaceWrapping;
+using Shared.Positioning;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 namespace Shared.Blocks {
     [RequireComponent(typeof(MeshRenderer))]
     public class Block : MonoBehaviour, IBuildable {
         private BlockType blockType;
         private MeshRenderer meshRenderer;
-        private Vector3Int position;
-        private UIntPosition chunkPosition;
+        private WorldPosition position;
 
         private int adjoiningBlocksCount;
+
         private void AddAdjoiningBlock() {
             adjoiningBlocksCount++;
             if (adjoiningBlocksCount == 6) gameObject.SetActive(false);
@@ -26,7 +26,7 @@ namespace Shared.Blocks {
 
         private const string PoolTag = "Block";
 
-        private static readonly MapStorage<Block> BlocksStorage = new MapStorage<Block>();
+        private static readonly MapStorage<Block> Blocks = new MapStorage<Block>();
 
         public BlockType BlockType {
             get => blockType;
@@ -37,101 +37,94 @@ namespace Shared.Blocks {
                 meshRenderer.sharedMaterial = blockType.BlockData().material;
             }
         }
-        public Vector3Int Position {
+        public WorldPosition Position {
             get => position;
             set {
-                if (value == position) return;
+                if (position == value) return;
 
                 position = value;
-                if (position.y < 0) position.y = 0;
-                UpdatePosition();
+                transform.position = (Vector3) position * Settings.GridUnitWidth;
             }
         }
-        public UIntPosition ChunkPosition {
-            get => chunkPosition;
-            set {
-                if (chunkPosition == value) return;
-
-                chunkPosition = value;
-                UpdatePosition();
-            }
-        }
-
-        // Create block at coordinates at current chunk 
-        public static bool Add(BlockType blockType, Vector3Int position, bool replaceExisting = false) =>
-            Add(blockType, position, PlayerPosition.CurrentChunk, replaceExisting);
-
-        public static bool Add(BlockType blockType, Vector3Int position, UIntPosition chunkPosition,
-            bool replaceExisting = false) {
-            var chunkIndex = chunkPosition.Index;
-            if (!BlocksStorage.TryGetValue(chunkIndex, out var chunk))
-                BlocksStorage[chunkIndex] = chunk = new SortedDictionary<int, Block>();
-
-            var positionIndex = Map.IndexInChunk(position);
-
-            if (!replaceExisting && chunk.ContainsKey(positionIndex)) return false;
+        /// <summary>
+        /// Instantiates <see cref="Block"/> of given <see cref="BlockType"/> at <see cref="WorldPosition"/> position
+        /// </summary>
+        public static void Instantiate(BlockType blockType, WorldPosition position) {
+            Debug.Assert(!Blocks.ContainsKey(position),
+                $"Tried to instantiate block at {position}, but block at position {position} already exists");
 
             var obj = Pooler.Request(PoolTag);
             var blockComponent = obj.GetComponent<Block>();
-            blockComponent.Init(blockType, position, chunkPosition);
-            chunk[positionIndex] = blockComponent;
+            blockComponent.Init(blockType, position);
 
-            var globalPosition = Map.ToGlobalPosition(position, chunkPosition);
-            foreach (var vector in UIntPosition.AdjoiningVectors) {
-                var (checkedPosition, checkedChunk) = Map.FromGlobalPosition(globalPosition + vector);
+            Blocks[position] = blockComponent;
 
-                if (BlocksStorage.TryGetValue(checkedChunk.Index, Map.IndexInChunk(checkedPosition), out var block)) {
+            foreach (var vector in WorldPosition.AdjoiningVectors)
+                if (Blocks.TryGetValue(position + vector, out var block)) {
                     blockComponent.AddAdjoiningBlock();
                     block.AddAdjoiningBlock();
                 }
-            }
-
-            return true;
         }
+        /// <summary>
+        /// Destroys block at position
+        /// </summary>
+        public static void Destroy(WorldPosition position) {
+            Debug.Assert(Blocks.ContainsKey(position),
+                $"Tried to destroy block at {position}, but block at position {position} does not exist");
 
-        public static bool Remove(Block block) {
-            var positionIndex = Map.IndexInChunk(block.position);
+            var block = Blocks[position];
 
-            var globalPosition = Map.ToGlobalPosition(block.position, block.chunkPosition);
-
-            foreach (var vector in UIntPosition.AdjoiningVectors) {
-                var (checkedPosition, checkedChunk) = Map.FromGlobalPosition(globalPosition + vector);
-
-                if (BlocksStorage.TryGetValue(checkedChunk.Index, Map.IndexInChunk(checkedPosition),
-                    out var adjoiningBlock)) {
+            foreach (var vector in WorldPosition.AdjoiningVectors)
+                if (Blocks.TryGetValue(position + vector, out var adjoiningBlock)) {
                     block.RemoveAdjoiningBlock();
                     adjoiningBlock.RemoveAdjoiningBlock();
                 }
+
+            Pooler.Return(PoolTag, block.gameObject);
+            Blocks.Remove(position);
+        }
+        /// <summary>
+        /// Instantiates <see cref="MapStorage{T}.Chunk"/> of <see cref="Block"/>s
+        /// <see cref="WorldPosition.ChunkPosition"/> position
+        /// </summary>
+        /// <param name="chunk">Chunk of block types</param>
+        /// <param name="position">Chunk position</param>
+        public static void InstantiateChunk([NotNull] MapStorage<BlockType>.Chunk chunk,
+            WorldPosition.ChunkPosition position) {
+            foreach (var (index, data) in chunk)
+                Instantiate(data, new WorldPosition(position, new WorldPosition.LocalPosition(index)));
+        }
+        /// <summary>
+        /// Destroys all blocks of chunk at coordinates
+        /// </summary>
+        /// <param name="position">Chunk position</param>
+        public static void DestroyChunk(WorldPosition.ChunkPosition position) {
+            if (!Blocks.TryGetChunk(position, out var chunk)) {
+                Debug.LogWarning($"Tried to delete chunk non-existent chunk at {position}");
+                return;
             }
 
-            // todo: this assumes that block is registered in map, thus may throw exception.. which is ok?
-            var chunk = BlocksStorage[block.chunkPosition.Index];
-            var obj = chunk[positionIndex];
-            Pooler.Return(PoolTag, obj.gameObject);
-            chunk.Remove(positionIndex);
-            return true;
+            // todo: check index transformation
+
+            // todo: delete chunk at position
+
+            var positions = chunk.Select(c => new WorldPosition.LocalPosition(c.index)).ToList();
+            foreach (var pos in positions) Destroy(new WorldPosition(position, pos));
+
+            Blocks.Remove(position);
         }
-
-        public static bool Remove(Vector3Int position) => Remove(position, PlayerPosition.CurrentChunk);
-
-        public static bool Remove(Vector3Int position, UIntPosition chunkPosition) =>
-            !BlocksStorage.TryGetValue(chunkPosition.Index, Map.IndexInChunk(position), out var block) || Remove(block);
 
         private void Awake() => meshRenderer = GetComponent<MeshRenderer>();
         private void Reset() => Awake();
 
-        private void Init(BlockType bType, Vector3Int pos, UIntPosition chunkPos) {
+        private void Init(BlockType type, WorldPosition pos) {
             adjoiningBlocksCount = 0;
             gameObject.SetActive(true);
-            BlockType = bType;
+            BlockType = type;
             Position = pos;
-            ChunkPosition = chunkPos;
         }
 
-        private void UpdatePosition() =>
-            transform.position = (Vector3) Map.ToGlobalPosition(position, chunkPosition) * Settings.GridUnitWidth;
-
-        public Vector3Int GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) =>
-            position + Vector3Int.RoundToInt(hitNormal);
+        public WorldPosition GetBuildPosition(Vector3 hitPoint, Vector3 hitNormal) =>
+            position + (WorldPosition) hitNormal;
     }
 }
