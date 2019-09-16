@@ -15,31 +15,39 @@ namespace Shared.SingletonBehaviour {
         private static void AssignInstance() {
             var instances = FindObjectsOfType<T>();
             if (instances.Length > 1) {
-                instance = instances[0];
-                for (var i = 1; i < instances.Length; i++) {
-                    Debug.LogWarning(
-                        $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {instances[i]}");
-                    DestroyImmediate(instances[i]);
+                if (instance == null) {
+                    for (var i = 1; i < instances.Length; i++) {
+                        Debug.LogWarning(
+                            $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {instances[i]}");
+                        DestroyImmediate(instances[i].gameObject);
+                    }
+
+                    instance = instances[0];
+                } else {
+
+                    foreach (var i in instances) {
+                        if (i != instance) {
+                            Debug.LogWarning(
+                                $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {i}");
+                            DestroyImmediate(i.gameObject);
+                        }
+                    }
                 }
             } else if (instances.Length == 1)
                 instance = instances[0];
             else
                 instance = new GameObject($"{typeof(T)} (Singleton)").AddComponent<T>();
+
+            // todo: #if UNITY_EDITOR... conditional check
+            if (Application.isPlaying) {
+                DontDestroyOnLoad(instance);
+                DontDestroyOnLoad(instance.gameObject);
+            }
         }
 
         // todo: Replace existing singleton behaviour in scene
         protected virtual void Awake() {
-            lock (Lock)
-                if (instance == null) {
-                    AssignInstance();
-                    instance = (T) this;
-                    if (EditorApplication.isPlaying) DontDestroyOnLoad(this);
-                } else if (instance != this) {
-                    Debug.LogWarning(
-                        $"[Singleton] Instance '{typeof(T)}' already exists in the scene, removing {this}");
-                    if (EditorApplication.isPlaying) Destroy(this);
-                    else DestroyImmediate(this);
-                }
+            lock (Lock) AssignInstance();
         }
 
         protected static T Instance {
@@ -52,7 +60,7 @@ namespace Shared.SingletonBehaviour {
         }
 
         private void OnDestroy() {
-            lock (Lock) instance = null;
+            lock (Lock) if (instance == this) instance = null;
         }
     }
 }

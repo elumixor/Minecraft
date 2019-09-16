@@ -1,4 +1,5 @@
 using Shared.GameManagement;
+using Shared.MenuSystem.Container;
 using Shared.Positioning;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ namespace Scenes.WorldScene {
         }
 
         private void LateUpdate() {
+            if (MenuContainer.MenuDisplayed) return;
+
             pitch -= rotationSpeed * Input.GetAxis("Mouse Y");
             yaw += rotationSpeed * Input.GetAxis("Mouse X");
 

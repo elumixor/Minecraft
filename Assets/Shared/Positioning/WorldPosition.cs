@@ -57,13 +57,15 @@ namespace Shared.Positioning {
             (int) ChunkSize * (Vector3Int) position.chunkPosition + (Vector3Int) position.localPosition;
 
         public static explicit operator WorldPosition(Vector3 position) {
-            var times = position / ChunkSize;
+            var round = Vector3Int.RoundToInt(position);
             var chunkPosition = new ChunkPosition(
-                Mathf.FloorToInt(times.x), Mathf.FloorToInt(times.y), Mathf.FloorToInt(times.z));
+                Mathf.FloorToInt((float) round.x / ChunkSize),
+                Mathf.FloorToInt((float) round.y / ChunkSize),
+                Mathf.FloorToInt((float) round.z / ChunkSize));
             var localPosition = new LocalPosition(
-                (uint) Mathf.FloorToInt(position.x - chunkPosition.x * ChunkSize),
-                (uint) Mathf.FloorToInt(position.y - chunkPosition.y * ChunkSize),
-                (uint) Mathf.FloorToInt(position.z - chunkPosition.z * ChunkSize));
+                (uint) (round.x - chunkPosition.x * ChunkSize),
+                (uint) (round.y - chunkPosition.y * ChunkSize),
+                (uint) (round.z - chunkPosition.z * ChunkSize));
             return new WorldPosition(chunkPosition, localPosition);
         }
 

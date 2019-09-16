@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using JetBrains.Annotations;
 using Shared.Blocks;
 using Shared.Positioning;
@@ -13,6 +15,37 @@ namespace Shared.GameManagement {
         [SerializeField] private SceneField worldScene;
         [SerializeField] private int seed;
 
+        // todo: custom property drawer for directory? if this is possible
+        [SerializeField] private string savedGamesFolder;
+        [SerializeField] private string savedGamesExtension;
+
+        public static (string name, string filePath) CurrentSave { get; private set; }
+
+        public static void SetCurrentSaveName(string saveName) {
+            CurrentSave = (saveName, Path.Combine(Application.persistentDataPath,
+                Instance.savedGamesFolder, $"{saveName}.{Instance.savedGamesExtension}"));
+        }
+
+        private static List<(string name, string filePath)> savedGames;
+        public static List<(string name, string filePath)> SavedGames {
+            get {
+                if (savedGames != null) return savedGames;
+
+                var combined = Path.Combine(Application.persistentDataPath, Instance.savedGamesFolder);
+                if (!Directory.Exists(combined)) {
+                    Directory.CreateDirectory(combined);
+                    return savedGames = new List<(string name, string filePath)>();
+                }
+
+                return savedGames =
+                    Directory.GetFiles(combined, "*." + Instance.savedGamesExtension)
+                        .Select(file => (Path.GetFileNameWithoutExtension(file), file))
+                        .ToList();
+            }
+        }
+
+        public static bool InGame => SceneManager.GetActiveScene().name == Instance.worldScene.SceneName;
+
         /// <summary>
         /// Action, to  be executed after scene has loaded
         /// </summary>
@@ -21,8 +54,11 @@ namespace Shared.GameManagement {
         /// <summary>
         /// Saves game state to a binary file
         /// </summary>
-        /// <param name="fileName">Name of saved data file</param>
-        public static void Save(string fileName) {
+        public static void Save() {
+            var fileName = CurrentSave.filePath;
+            var dir = Path.GetDirectoryName(fileName);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
             // todo: maybe write file version
             // todo: maybe write chunk size as well and make it variable
             // todo: maybe CONVERT block positions from previous version into current
@@ -60,55 +96,78 @@ namespace Shared.GameManagement {
                     }
                 }
             }
+
+            if (!savedGames.Contains(CurrentSave)) savedGames.Add(CurrentSave);
         }
         /// <summary>
         /// Loads game state from file, creates map, blocks and places player at saved position
         /// </summary>
-        /// <param name="fileName">Path to saved data file</param>
+        /// <param name="saveFile">Name and path to saved data file</param>
         /// <exception cref="FileLoadException">If could not correctly load save file</exception>
-        public static void Load(string fileName) {
-            using (var reader = new BinaryReader(File.Open(fileName, FileMode.Create))) {
-                var cx = reader.ReadInt32();
-                var cy = reader.ReadInt32();
-                var cz = reader.ReadInt32();
+        public static void Load((string name, string path) saveFile) {
+            // todo: clear all blocks before load
+            CurrentSave = saveFile;
 
-                var px = reader.ReadUInt32();
-                var py = reader.ReadUInt32();
-                var pz = reader.ReadUInt32();
+            SceneManager.LoadScene(Instance.worldScene);
 
-                Player.Position = new WorldPosition(
-                    new WorldPosition.ChunkPosition(cx, cy, cz),
-                    new WorldPosition.LocalPosition(px, py, pz));
+            onLoaded = () => {
+                using (var reader = new BinaryReader(File.Open(saveFile.path, FileMode.Open))) {
+                    var cx = reader.ReadInt32();
+                    var cy = reader.ReadInt32();
+                    var cz = reader.ReadInt32();
 
-                var zx = reader.ReadInt32();
-                var zy = reader.ReadInt32();
+                    var px = reader.ReadUInt32();
+                    var py = reader.ReadUInt32();
+                    var pz = reader.ReadUInt32();
 
-                Map.zero = (zx, zy);
+                    Player.Position = new WorldPosition(
+                        new WorldPosition.ChunkPosition(cx, cy, cz),
+                        new WorldPosition.LocalPosition(px, py, pz));
 
-                var storageCount = reader.ReadInt32();
-                var storage = new MapStorage<BlockType>();
+                    var zx = reader.ReadInt32();
+                    var zy = reader.ReadInt32();
 
-                for (var i = 0; i < storageCount; i++) {
-                    var chunkIndex = reader.ReadUInt64();
-                    var blocksCount = reader.ReadInt32();
+                    Map.zero = (zx, zy);
 
-                    var chunk = storage[new WorldPosition.ChunkPosition(chunkIndex)] =
-                        new MapStorage<BlockType>.Chunk();
+                    var storageCount = reader.ReadInt32();
+                    var storage = new MapStorage<BlockType>();
 
-                    for (var j = 0; j < blocksCount; j++) {
-                        var blockIndex = reader.ReadUInt32();
-                        var blockType = (BlockType) reader.ReadInt32();
+                    for (var i = 0; i < storageCount; i++) {
+                        var chunkIndex = reader.ReadUInt64();
+                        var blocksCount = reader.ReadInt32();
 
-                        chunk[new WorldPosition.LocalPosition(blockIndex)] = blockType;
+                        var chunk = storage[new WorldPosition.ChunkPosition(chunkIndex)] =
+                            new MapStorage<BlockType>.Chunk();
+
+                        for (var j = 0; j < blocksCount; j++) {
+                            var blockIndex = reader.ReadUInt32();
+                            var blockType = (BlockType) reader.ReadInt32();
+
+                            chunk[new WorldPosition.LocalPosition(blockIndex)] = blockType;
+                        }
+                    }
+
+                    for (var x = -1; x <= 1; x++)
+                    for (var y = -1; y <= 1; y++)
+                    for (var z = -1; z <= 1; z++) {
+                        var chunkPosition = new WorldPosition.ChunkPosition(x, y, z) + Player.Position.chunkPosition;
+                        if (chunkPosition.y >= 0)
+                            Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
                     }
                 }
-            }
+
+                onLoaded = null;
+            };
         }
         /// <summary>
         /// Begins new game
         /// </summary>
         public static void New() {
             SceneManager.LoadScene(Instance.worldScene);
+
+            CurrentSave = ("_.tmp", Path.Combine(Application.persistentDataPath,
+                Instance.savedGamesFolder, $"_.tmp.{Instance.savedGamesExtension}"));
+
             onLoaded = () => {
                 Map.zero = (Instance.seed, Instance.seed);
 
@@ -116,7 +175,8 @@ namespace Shared.GameManagement {
                 for (var y = 0; y <= 2; y++)
                 for (var z = -1; z <= 1; z++) {
                     var chunkPosition = new WorldPosition.ChunkPosition(x, y, z);
-                    Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
+                    if (chunkPosition.y >= 0)
+                        Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
                 }
 
                 for (var chunkY = 1;; chunkY++) {
@@ -129,12 +189,31 @@ namespace Shared.GameManagement {
                         var localPosition = new WorldPosition.LocalPosition(x, y, z);
                         if (!chunk.ContainsKey(localPosition)) {
                             Player.Position = new WorldPosition(chunkPosition, localPosition);
+                            Save();
                             onLoaded = null;
                             return;
                         }
                     }
                 }
             };
+        }
+        /// <summary>
+        /// Exits game
+        /// </summary>
+        public static void ExitGame() {
+            Save();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+         Application.Quit();
+#endif
+        }
+        /// <summary>
+        /// Exits to main menu
+        /// </summary>
+        public static void ExitToMenu() {
+            Save();
+            SceneManager.LoadScene(Instance.mainMenuScene);
         }
 
         #region Private helper methods

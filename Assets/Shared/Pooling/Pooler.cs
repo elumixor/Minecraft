@@ -12,7 +12,7 @@ namespace Shared.Pooling {
             public int size;
         }
 
-        [SerializeField] private List<Pool> pools;
+        [SerializeField] private List<Pool> pools = new List<Pool>();
         private Dictionary<string, (GameObject prefab, Queue<GameObject> queue)> poolsDictionary;
 
         // Public API
@@ -55,14 +55,16 @@ namespace Shared.Pooling {
         protected override void Awake() {
             base.Awake();
 
-            if (Application.isPlaying) transform.DestroyAllChildren();
+            // check for null because other instance of singleton may be present in the scene
+            if (!Application.isPlaying || this == null) return;
 
+            transform.DestroyAllChildren();
             poolsDictionary = new Dictionary<string, (GameObject prefab, Queue<GameObject> queue)>(pools.Count);
 
             foreach (var pool in pools) {
                 var queue = new Queue<GameObject>(pool.size);
                 poolsDictionary[pool.tag] = (pool.prefab, queue);
-                for (var i = 0; i < pool.size; i++) ExpandQueue(pool.prefab);
+                for (var i = 0; i < pool.size; i++) queue.Enqueue(ExpandQueue(pool.prefab));
             }
         }
 

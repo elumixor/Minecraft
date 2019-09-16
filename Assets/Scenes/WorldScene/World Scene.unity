@@ -14,12 +14,12 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 1}
-  m_FogMode: 3
+  m_FogMode: 1
   m_FogDensity: 0.1
-  m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_LinearFogStart: 5
+  m_LinearFogEnd: 40
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.45045394, g: 0.50045544, b: 0.5751854, a: 1}
+  m_IndirectSpecularColor: {r: 0.4504543, g: 0.5004559, b: 0.5751866, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -276,11 +276,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c3a0c67d128c6b4b895ac03ee52a9bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  map: []
   waterLevel: 0
   sandDepth: 0
   groundDepth: 0
   groundUnderwaterDepth: 0
+  octaves: 2
+  scale: 10
+  persistance: 0.5
+  lacunarity: 2
 --- !u!4 &174738965
 Transform:
   m_ObjectHideFlags: 0
@@ -940,7 +943,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_TargetDisplay: 0
 --- !u!224 &1116552351
 RectTransform:
@@ -1232,11 +1235,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6936777896374d9c8c8b11ff3b94f6ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockPrefab: {fileID: 3838715469976644200, guid: 7120fbe96a4a0fc4e98b0af293188c89,
-    type: 3}
   blockDataContainer: {fileID: 11400000, guid: b98f98c3e565e2f418dd4c79340c72ca, type: 2}
-  blocksContainer: {fileID: 1831240771}
-  floor: {fileID: 1100139324}
   gridUnitWidth: 1
 --- !u!4 &1768659942
 Transform:
@@ -1361,7 +1360,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.01
   far clip plane: 1000
   field of view: 60
   orthographic: 0

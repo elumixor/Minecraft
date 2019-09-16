@@ -18,8 +18,8 @@ namespace Shared.Positioning {
 
             public LocalPosition(uint x, uint y, uint z) {
                 Debug.Assert(x < ChunkSize, $"Local position's x ({x}) was greater or equal to ChunkSize {ChunkSize}");
-                Debug.Assert(y < ChunkSize, $"Local position's x ({x}) was greater or equal to ChunkSize {ChunkSize}");
-                Debug.Assert(z < ChunkSize, $"Local position's x ({x}) was greater or equal to ChunkSize {ChunkSize}");
+                Debug.Assert(y < ChunkSize, $"Local position's y ({y}) was greater or equal to ChunkSize {ChunkSize}");
+                Debug.Assert(z < ChunkSize, $"Local position's z ({z}) was greater or equal to ChunkSize {ChunkSize}");
 
                 this.x = x;
                 this.y = y;
