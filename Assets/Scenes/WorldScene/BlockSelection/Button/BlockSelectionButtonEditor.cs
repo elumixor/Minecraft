@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using Shared.Blocks;
 using Shared.Blocks.BlockDataContainer;
@@ -29,3 +30,4 @@ namespace Scenes.WorldScene.BlockSelection.Button {
         }
     }
 }
+#endif

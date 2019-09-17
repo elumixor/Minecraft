@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 
 using System;
 using UnityEditor;
@@ -19,3 +20,4 @@ namespace Shared.SingletonBehaviour {
         }
     }
 }
+#endif
