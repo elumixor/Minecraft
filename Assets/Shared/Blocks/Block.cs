@@ -62,36 +62,30 @@ namespace Shared.Blocks {
         /// </summary>
         /// <param name="chunk">Chunk of block types</param>
         /// <param name="position">Chunk position</param>
-        public static IEnumerator InstantiateChunk([NotNull] MapStorage<Map.BlockInfo>.Chunk chunk,
+        public static void InstantiateChunk([NotNull] MapStorage<Map.BlockInfo>.Chunk chunk,
             WorldPosition.ChunkPosition position) {
-            var c = 0;
+            if (Blocks.ContainsKey(position)) return;
+
             foreach (var (index, data) in chunk) {
                 if (data.adjoiningBlocks < 6) {
                     Instantiate(data.blockType, new WorldPosition(position, new WorldPosition.LocalPosition(index)));
-//                    if (c++ > 50) {
-//                        c = 0;
-//                        yield return null;
-//                    }
                 }
             }
-
-            yield return null;
         }
         /// <summary>
         /// Destroys all blocks of chunk at coordinates
         /// </summary>
         /// <param name="position">Chunk position</param>
-        public static IEnumerator DestroyChunk(WorldPosition.ChunkPosition position) {
+        public static void DestroyChunk(WorldPosition.ChunkPosition position) {
             if (!Blocks.TryGetChunk(position, out var chunk)) {
                 Debug.LogWarning($"Tried to delete chunk non-existent chunk at {position}");
-                yield break;
+                return;
             }
 
             foreach (var pos in chunk.Select(c => new WorldPosition.LocalPosition(c.index)).ToList())
                 Destroy(new WorldPosition(position, pos));
 
             Blocks.Remove(position);
-            yield return null;
         }
 
         private void Awake() => meshRenderer = GetComponent<MeshRenderer>();

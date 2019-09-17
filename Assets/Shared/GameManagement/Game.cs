@@ -21,6 +21,10 @@ namespace Shared.GameManagement {
 
         public static (string name, string filePath) CurrentSave { get; private set; }
 
+        private static (string name, string filePath) Temporary => ("_.tmp", Path.Combine(
+            Application.persistentDataPath,
+            Instance.savedGamesFolder, $"_.tmp.{Instance.savedGamesExtension}"));
+
         public static void SetCurrentSaveName(string saveName) {
             CurrentSave = (saveName, Path.Combine(Application.persistentDataPath,
                 Instance.savedGamesFolder, $"{saveName}.{Instance.savedGamesExtension}"));
@@ -37,9 +41,11 @@ namespace Shared.GameManagement {
                     return savedGames = new List<(string name, string filePath)>();
                 }
 
+
                 return savedGames =
-                    Directory.GetFiles(combined, "*." + Instance.savedGamesExtension)
-                        .Select(file => (Path.GetFileNameWithoutExtension(file), file))
+                    new DirectoryInfo(combined).GetFiles($"*.{Instance.savedGamesExtension}")
+                        .OrderByDescending(file => file.LastWriteTime)
+                        .Select(file => (Path.GetFileNameWithoutExtension(file.Name), file.FullName))
                         .ToList();
             }
         }
@@ -58,6 +64,11 @@ namespace Shared.GameManagement {
             var fileName = CurrentSave.filePath;
             var dir = Path.GetDirectoryName(fileName);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+            if (CurrentSave.name != Temporary.name && File.Exists(Temporary.filePath)) {
+                savedGames.Remove(CurrentSave);
+                File.Delete(Temporary.filePath);
+            }
 
             // todo: maybe write file version
             // todo: maybe write chunk size as well and make it variable
@@ -98,7 +109,8 @@ namespace Shared.GameManagement {
                 }
             }
 
-            if (!savedGames.Contains(CurrentSave)) savedGames.Add(CurrentSave);
+            if (CurrentSave.name != Temporary.name && File.Exists(Temporary.filePath) &&
+                !savedGames.Contains(CurrentSave)) savedGames.Add(CurrentSave);
         }
         /// <summary>
         /// Loads game state from file, creates map, blocks and places player at saved position
@@ -106,7 +118,10 @@ namespace Shared.GameManagement {
         /// <param name="saveFile">Name and path to saved data file</param>
         /// <exception cref="FileLoadException">If could not correctly load save file</exception>
         public static void Load((string name, string path) saveFile) {
-            // todo: clear all blocks before load
+            if (InGame) {
+                Save();
+                Cleanup();
+            }
             CurrentSave = saveFile;
 
             SceneManager.LoadScene(Instance.worldScene);
@@ -156,10 +171,7 @@ namespace Shared.GameManagement {
                     for (var y = -1; y <= 1; y++)
                     for (var z = -1; z <= 1; z++) {
                         var chunkPosition = new WorldPosition.ChunkPosition(x, y, z) + Player.Position.chunkPosition;
-                        if (chunkPosition.y >= 0) {
-                            Instance.StartCoroutine(
-                                Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition));
-                        }
+                        if (chunkPosition.y >= 0) Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
                     }
                 }
 
@@ -172,20 +184,17 @@ namespace Shared.GameManagement {
         public static void New() {
             SceneManager.LoadScene(Instance.worldScene);
 
-            CurrentSave = ("_.tmp", Path.Combine(Application.persistentDataPath,
-                Instance.savedGamesFolder, $"_.tmp.{Instance.savedGamesExtension}"));
+            CurrentSave = Temporary;
 
             onLoaded = () => {
+                Map.storage = new MapStorage<Map.BlockInfo>();
                 Map.zero = (Instance.seed, Instance.seed);
 
                 for (var x = -1; x <= 1; x++)
                 for (var y = 0; y <= 2; y++)
                 for (var z = -1; z <= 1; z++) {
                     var chunkPosition = new WorldPosition.ChunkPosition(x, y, z);
-                    if (chunkPosition.y >= 0) {
-                        Instance.StartCoroutine(
-                            Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition));
-                    }
+                    if (chunkPosition.y >= 0) Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
                 }
 
                 for (var chunkY = 1;; chunkY++) {
@@ -222,10 +231,22 @@ namespace Shared.GameManagement {
         /// </summary>
         public static void ExitToMenu() {
             Save();
+            Cleanup();
             SceneManager.LoadScene(Instance.mainMenuScene);
         }
 
         #region Private helper methods
+        /// <summary>
+        /// Cleanup all blocks
+        /// </summary>
+        private static void Cleanup() {
+            var pos = Player.Position.chunkPosition;
+            for (var z = -1; z <= 1; z++)
+            for (var y = -1; y <= 1; y++)
+            for (var x = -1; x <= 1; x++)
+                if (pos.y + y >= 0)
+                    Block.DestroyChunk(pos + new WorldPosition.ChunkPosition(x, y, z));
+        }
         /// <summary>
         /// Subscribes to <see cref="SceneManager.sceneLoaded"/> event
         /// </summary>

@@ -84,7 +84,7 @@ namespace Scenes.WorldScene {
 
                 var buildPosition = buildable.GetBuildPosition(hit.point, hit.normal);
 
-                if (notDestroying) {
+                if (notDestroying && buildPosition != Player.Position) {
                     previewCube.transform.position = (Vector3) buildPosition * Settings.GridUnitWidth;
                     previewCube.renderer.material.color =
                         BlockSelector.SelectedType.BlockData().material.color.SetAlpha(previewCube.opacity);
@@ -93,14 +93,20 @@ namespace Scenes.WorldScene {
 
                 if (Input.GetMouseButtonDown(0)) {
                     if (notDestroying) {
-                        CreateBlockAt(buildPosition);
+                        if (buildPosition != Player.Position)
+                            CreateBlockAt(buildPosition);
                     } else if (objectHit.GetComponent<Block>() is var block && block != null) {
                         var now = Time.time;
                         destruction = (block, (now, now + block.BlockType.BlockData().durability));
                         destroyCursor.SetColorAlpha(.5f);
                     }
+                } else if (Input.GetMouseButtonDown(1) && objectHit.GetComponent<Block>() is var block &&
+                           block != null) {
+                    var now = Time.time;
+                    destruction = (block, (now, now + block.BlockType.BlockData().durability));
+                    destroyCursor.SetColorAlpha(.5f);
                 }
-            } else if (Input.GetMouseButtonUp(0)) {
+            } else if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1)) {
                 destruction = null;
                 destroyCursor.SetColorAlpha(0f);
                 cursor.transform.localScale = Vector3.one;
