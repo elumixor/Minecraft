@@ -7,6 +7,7 @@ using Shared;
 using Shared.Blocks;
 using Shared.GameManagement;
 using Shared.MenuSystem.Container;
+using Shared.Positioning;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -44,6 +45,11 @@ namespace Scenes.WorldScene {
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;
+        }
+
+        private static void CreateBlockAt(WorldPosition buildPosition) {
+            Map.AddBlock(BlockSelector.SelectedType, buildPosition);
+            Block.Instantiate(BlockSelector.SelectedType, buildPosition);
         }
 
 
@@ -87,8 +93,7 @@ namespace Scenes.WorldScene {
 
                 if (Input.GetMouseButtonDown(0)) {
                     if (notDestroying) {
-                        Map.SetBlock(BlockSelector.SelectedType, buildPosition);
-                        Block.Instantiate(BlockSelector.SelectedType, buildPosition);
+                        CreateBlockAt(buildPosition);
                     } else if (objectHit.GetComponent<Block>() is var block && block != null) {
                         var now = Time.time;
                         destruction = (block, (now, now + block.BlockType.BlockData().durability));

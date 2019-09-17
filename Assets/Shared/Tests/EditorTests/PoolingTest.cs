@@ -11,12 +11,12 @@ namespace Shared.Tests.EditorTests {
         [Test]
         public void PoolingTestSimplePasses() {
             // Use the Assert class to test conditions
-            NUnit.Framework.Assert.Catch<NullReferenceException>(() => Pooler.Request("someTag"));
+            NUnit.Framework.Assert.Catch<NullReferenceException>(() => BlockPooler.Request());
 
-            var instance = UnityEngine.Object.FindObjectOfType<Pooler>();
+            var instance = UnityEngine.Object.FindObjectOfType<BlockPooler>();
 
             Assert.IsNotNull(instance);
-            Assert.AreEqual(UnityEngine.Object.FindObjectsOfType<Pooler>().Length, 1);
+            Assert.AreEqual(UnityEngine.Object.FindObjectsOfType<BlockPooler>().Length, 1);
         }
     }
 }

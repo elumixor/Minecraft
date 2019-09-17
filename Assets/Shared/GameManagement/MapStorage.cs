@@ -68,7 +68,7 @@ namespace Shared.GameManagement {
             storage.TryGetValue(position.chunkPosition.Index, out var dict)
             && dict.Remove(position.localPosition);
         /// <summary>
-        /// Removes data at world position
+        /// Removes chunk at chunk position
         /// </summary>
         public bool Remove(in WorldPosition.ChunkPosition position) => storage.Remove(position.Index);
         public IEnumerator<(ulong index, Chunk chunk)> GetEnumerator() =>

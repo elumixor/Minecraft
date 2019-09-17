@@ -92,7 +92,8 @@ namespace Shared.GameManagement {
 
                     foreach (var (blockIndex, blockType) in chunk) {
                         writer.Write(blockIndex);
-                        writer.Write((int) blockType);
+                        writer.Write((int) blockType.blockType);
+                        writer.Write(blockType.adjoiningBlocks);
                     }
                 }
             }
@@ -130,29 +131,35 @@ namespace Shared.GameManagement {
                     Map.zero = (zx, zy);
 
                     var storageCount = reader.ReadInt32();
-                    var storage = new MapStorage<BlockType>();
+                    var storage = new MapStorage<Map.BlockInfo>();
 
                     for (var i = 0; i < storageCount; i++) {
                         var chunkIndex = reader.ReadUInt64();
                         var blocksCount = reader.ReadInt32();
 
                         var chunk = storage[new WorldPosition.ChunkPosition(chunkIndex)] =
-                            new MapStorage<BlockType>.Chunk();
+                            new MapStorage<Map.BlockInfo>.Chunk();
 
                         for (var j = 0; j < blocksCount; j++) {
                             var blockIndex = reader.ReadUInt32();
                             var blockType = (BlockType) reader.ReadInt32();
+                            var adjoiningBlocks = reader.ReadByte();
 
-                            chunk[new WorldPosition.LocalPosition(blockIndex)] = blockType;
+                            chunk[new WorldPosition.LocalPosition(blockIndex)] =
+                                new Map.BlockInfo(blockType, adjoiningBlocks);
                         }
                     }
+
+                    Map.storage = storage;
 
                     for (var x = -1; x <= 1; x++)
                     for (var y = -1; y <= 1; y++)
                     for (var z = -1; z <= 1; z++) {
                         var chunkPosition = new WorldPosition.ChunkPosition(x, y, z) + Player.Position.chunkPosition;
-                        if (chunkPosition.y >= 0)
-                            Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
+                        if (chunkPosition.y >= 0) {
+                            Instance.StartCoroutine(
+                                Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition));
+                        }
                     }
                 }
 
@@ -175,16 +182,18 @@ namespace Shared.GameManagement {
                 for (var y = 0; y <= 2; y++)
                 for (var z = -1; z <= 1; z++) {
                     var chunkPosition = new WorldPosition.ChunkPosition(x, y, z);
-                    if (chunkPosition.y >= 0)
-                        Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition);
+                    if (chunkPosition.y >= 0) {
+                        Instance.StartCoroutine(
+                            Block.InstantiateChunk(Map.GetChunk(chunkPosition), chunkPosition));
+                    }
                 }
 
                 for (var chunkY = 1;; chunkY++) {
                     var chunkPosition = new WorldPosition.ChunkPosition(0, chunkY, 0);
                     var chunk = Map.GetChunk(chunkPosition);
 
-                    for (var z = 0u; z < WorldPosition.ChunkSize; z++)
-                    for (var x = 0u; x < WorldPosition.ChunkSize; x++)
+                    for (var z = WorldPosition.ChunkSize / 2; z < WorldPosition.ChunkSize; z++)
+                    for (var x = WorldPosition.ChunkSize / 2; x < WorldPosition.ChunkSize; x++)
                     for (var y = 0u; y < WorldPosition.ChunkSize; y++) {
                         var localPosition = new WorldPosition.LocalPosition(x, y, z);
                         if (!chunk.ContainsKey(localPosition)) {

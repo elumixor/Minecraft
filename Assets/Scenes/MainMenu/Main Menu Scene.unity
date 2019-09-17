@@ -884,11 +884,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff4edd58a974f11821d33f402c8d062, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pools:
-  - tag: Block
-    prefab: {fileID: 3838715469976644202, guid: 7120fbe96a4a0fc4e98b0af293188c89,
-      type: 3}
-    size: 100
+  prefab: {fileID: 3838715469976644202, guid: 7120fbe96a4a0fc4e98b0af293188c89, type: 3}
+  size: 1000
 --- !u!4 &2104968737
 Transform:
   m_ObjectHideFlags: 0

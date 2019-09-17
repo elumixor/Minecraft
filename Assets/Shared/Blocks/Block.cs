@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using JetBrains.Annotations;
 using Shared.GameManagement;
@@ -11,20 +12,6 @@ namespace Shared.Blocks {
         private BlockType blockType;
         private MeshRenderer meshRenderer;
         private WorldPosition position;
-
-        private int adjoiningBlocksCount;
-
-        private void AddAdjoiningBlock() {
-            adjoiningBlocksCount++;
-            if (adjoiningBlocksCount == 6) gameObject.SetActive(false);
-        }
-
-        private void RemoveAdjoiningBlock() {
-            adjoiningBlocksCount--;
-            if (adjoiningBlocksCount < 6) gameObject.SetActive(true);
-        }
-
-        private const string PoolTag = "Block";
 
         private static readonly MapStorage<Block> Blocks = new MapStorage<Block>();
 
@@ -53,17 +40,11 @@ namespace Shared.Blocks {
             Debug.Assert(!Blocks.ContainsKey(position),
                 $"Tried to instantiate block at {position}, but block at position {position} already exists");
 
-            var obj = Pooler.Request(PoolTag);
+            var obj = BlockPooler.Request();
             var blockComponent = obj.GetComponent<Block>();
             blockComponent.Init(blockType, position);
 
             Blocks[position] = blockComponent;
-
-            foreach (var vector in WorldPosition.AdjoiningVectors)
-                if (Blocks.TryGetValue(position + vector, out var block)) {
-                    blockComponent.AddAdjoiningBlock();
-                    block.AddAdjoiningBlock();
-                }
         }
         /// <summary>
         /// Destroys block at position
@@ -72,15 +53,7 @@ namespace Shared.Blocks {
             Debug.Assert(Blocks.ContainsKey(position),
                 $"Tried to destroy block at {position}, but block at position {position} does not exist");
 
-            var block = Blocks[position];
-
-            foreach (var vector in WorldPosition.AdjoiningVectors)
-                if (Blocks.TryGetValue(position + vector, out var adjoiningBlock)) {
-                    block.RemoveAdjoiningBlock();
-                    adjoiningBlock.RemoveAdjoiningBlock();
-                }
-
-            Pooler.Return(PoolTag, block.gameObject);
+            BlockPooler.Return(Blocks[position].gameObject);
             Blocks.Remove(position);
         }
         /// <summary>
@@ -89,36 +62,42 @@ namespace Shared.Blocks {
         /// </summary>
         /// <param name="chunk">Chunk of block types</param>
         /// <param name="position">Chunk position</param>
-        public static void InstantiateChunk([NotNull] MapStorage<BlockType>.Chunk chunk,
+        public static IEnumerator InstantiateChunk([NotNull] MapStorage<Map.BlockInfo>.Chunk chunk,
             WorldPosition.ChunkPosition position) {
-            foreach (var (index, data) in chunk)
-                Instantiate(data, new WorldPosition(position, new WorldPosition.LocalPosition(index)));
+            var c = 0;
+            foreach (var (index, data) in chunk) {
+                if (data.adjoiningBlocks < 6) {
+                    Instantiate(data.blockType, new WorldPosition(position, new WorldPosition.LocalPosition(index)));
+//                    if (c++ > 50) {
+//                        c = 0;
+//                        yield return null;
+//                    }
+                }
+            }
+
+            yield return null;
         }
         /// <summary>
         /// Destroys all blocks of chunk at coordinates
         /// </summary>
         /// <param name="position">Chunk position</param>
-        public static void DestroyChunk(WorldPosition.ChunkPosition position) {
+        public static IEnumerator DestroyChunk(WorldPosition.ChunkPosition position) {
             if (!Blocks.TryGetChunk(position, out var chunk)) {
                 Debug.LogWarning($"Tried to delete chunk non-existent chunk at {position}");
-                return;
+                yield break;
             }
 
-            // todo: check index transformation
-
-            // todo: delete chunk at position
-
-            var positions = chunk.Select(c => new WorldPosition.LocalPosition(c.index)).ToList();
-            foreach (var pos in positions) Destroy(new WorldPosition(position, pos));
+            foreach (var pos in chunk.Select(c => new WorldPosition.LocalPosition(c.index)).ToList())
+                Destroy(new WorldPosition(position, pos));
 
             Blocks.Remove(position);
+            yield return null;
         }
 
         private void Awake() => meshRenderer = GetComponent<MeshRenderer>();
         private void Reset() => Awake();
 
         private void Init(BlockType type, WorldPosition pos) {
-            adjoiningBlocksCount = 0;
             gameObject.SetActive(true);
             BlockType = type;
             Position = pos;

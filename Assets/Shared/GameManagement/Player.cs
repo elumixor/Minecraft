@@ -23,27 +23,28 @@ namespace Shared.GameManagement {
             if (diff.x != 0) {
                 for (var z = -1; z <= 1; z++)
                 for (var y = -1; y <= 1; y++) {
-                    Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(-diff.x, y, z));
+                    Instance.StartCoroutine(
+                        Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(-diff.x, y, z)));
                     var pos = current + new WorldPosition.ChunkPosition(diff.x, y, z);
                     if (pos.y >= 0)
-                        Block.InstantiateChunk(Map.GetChunk(pos), pos);
+                        Instance.StartCoroutine(Block.InstantiateChunk(Map.GetChunk(pos), pos));
                 }
             } else if (diff.y != 0) {
                 for (var z = -1; z <= 1; z++)
                 for (var x = -1; x <= 1; x++) {
-
-                    Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(x, -diff.y, z));
+                    Instance.StartCoroutine(
+                        Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(x, -diff.y, z)));
                     var pos = current + new WorldPosition.ChunkPosition(x, diff.y, z);
                     if (pos.y >= 0)
-                        Block.InstantiateChunk(Map.GetChunk(pos), pos);
+                        Instance.StartCoroutine(Block.InstantiateChunk(Map.GetChunk(pos), pos));
                 }
             } else if (diff.z != 0) {
                 for (var y = -1; y <= 1; y++)
                 for (var x = -1; x <= 1; x++) {
-                    Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(x, y, -diff.z));
+                    Instance.StartCoroutine(Block.DestroyChunk(previous + new WorldPosition.ChunkPosition(x, y, -diff.z)));
                     var pos = current + new WorldPosition.ChunkPosition(x, y, diff.z);
                     if (pos.y >= 0)
-                        Block.InstantiateChunk(Map.GetChunk(pos), pos);
+                        Instance.StartCoroutine(Block.InstantiateChunk(Map.GetChunk(pos), pos));
                 }
             }
         }
