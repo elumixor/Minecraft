@@ -19,10 +19,11 @@ namespace Shared.MenuSystem.MenuScripts {
         [SerializeField] private Text placeholder;
         [SerializeField] private InputField input;
 
+
         private void OnEnable() {
             content.DestroyAllChildren();
 
-          var rect = cancelButton.GetComponent<RectTransform>().rect;
+            var rect = optionButton.GetComponent<RectTransform>().rect;
 
             var itemHeight = rect.height;
             var panelHeight = (Game.SavedGames.Count - 1) * itemHeight;
@@ -52,7 +53,7 @@ namespace Shared.MenuSystem.MenuScripts {
         protected void Start() {
             offset = 0f;
 
-            var rect = cancelButton.GetComponent<RectTransform>().rect;
+            var rect = optionButton.GetComponent<RectTransform>().rect;
 
             var itemHeight = rect.height;
             var panelHeight = (Game.SavedGames.Count - 1) * itemHeight;

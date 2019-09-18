@@ -2,9 +2,9 @@
 
 using System.Collections;
 using JetBrains.Annotations;
-using Scenes.WorldScene.BlockSelection;
 using Shared;
 using Shared.Blocks;
+using Shared.BlockSelection;
 using Shared.GameManagement;
 using Shared.MenuSystem.Container;
 using Shared.Positioning;
@@ -19,6 +19,7 @@ namespace Scenes.WorldScene {
         [SerializeField] private GameObject previewCubeObject;
         [SerializeField] private Image cursor;
         [SerializeField] private Image destroyCursor;
+        [SerializeField] private ParticleSystem onDestroyParticleSystem;
 
         private Camera mainCamera;
         private Vector2 cursorsDifference;
@@ -42,6 +43,8 @@ namespace Scenes.WorldScene {
         private void DestroySelectedBlock(Block block) {
             Map.Remove(block.Position);
             Block.Destroy(block.Position);
+            var particle = Instantiate(onDestroyParticleSystem, block.transform.position, Quaternion.identity);
+            particle.GetComponent<ParticleSystemRenderer>().material = block.GetComponent<Renderer>().material;
             destruction = null;
             destroyCursor.SetColorAlpha(0f);
             cursor.transform.localScale = Vector3.one;

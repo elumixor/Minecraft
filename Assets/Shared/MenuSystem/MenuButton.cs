@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -5,7 +6,7 @@ using UnityEngine.UI;
 namespace Shared.MenuSystem {
     public class MenuButton : MonoBehaviour {
         [SerializeField] private Button button;
-        [SerializeField] private Text text;
+        [SerializeField] private TMPro.TextMeshProUGUI text;
 
         [SerializeField] private string label;
 

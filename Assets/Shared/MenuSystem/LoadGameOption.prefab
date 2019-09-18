@@ -12,6 +12,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: LoadGameOption
       objectReference: {fileID: 0}
+    - target: {fileID: 5990918247477783737, guid: af549291bfeb803449ec8f1477259d98,
+        type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5990918247477783737, guid: af549291bfeb803449ec8f1477259d98,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 31.1
+      objectReference: {fileID: 0}
     - target: {fileID: 2355212012046902141, guid: af549291bfeb803449ec8f1477259d98,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -85,7 +95,7 @@ PrefabInstance:
     - target: {fileID: 2355212012046902141, guid: af549291bfeb803449ec8f1477259d98,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 30
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 2355212012046902141, guid: af549291bfeb803449ec8f1477259d98,
         type: 3}
@@ -116,6 +126,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Pivot.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3242263897204231757, guid: af549291bfeb803449ec8f1477259d98,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -38.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3242263897204231757, guid: af549291bfeb803449ec8f1477259d98,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -27.4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: af549291bfeb803449ec8f1477259d98, type: 3}

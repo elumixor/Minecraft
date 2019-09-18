@@ -16,7 +16,9 @@ namespace Shared.MenuSystem.MenuScripts {
         private void OnEnable() {
             content.DestroyAllChildren();
 
-            var rect = cancelButton.GetComponent<RectTransform>().rect;
+            offset = 0f;
+
+            var rect = optionButton.GetComponent<RectTransform>().rect;
 
             var itemHeight = rect.height;
             var panelHeight = Game.SavedGames.Count * itemHeight;
@@ -41,7 +43,7 @@ namespace Shared.MenuSystem.MenuScripts {
 
         protected void Start() {
             offset = 0f;
-            var rect = cancelButton.GetComponent<RectTransform>().rect;
+            var rect = optionButton.GetComponent<RectTransform>().rect;
 
             var itemHeight = rect.height;
             var panelHeight = Game.SavedGames.Count * itemHeight;

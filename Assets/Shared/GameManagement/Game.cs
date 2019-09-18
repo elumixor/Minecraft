@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
 using Shared.Blocks;
+using Shared.BlockSelection;
 using Shared.Positioning;
 using Shared.SingletonBehaviour;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Random = System.Random;
 
 namespace Shared.GameManagement {
     public class Game : SingletonBehaviour<Game> {
@@ -31,6 +33,7 @@ namespace Shared.GameManagement {
         }
 
         private static List<(string name, string filePath)> savedGames;
+
         public static List<(string name, string filePath)> SavedGames {
             get {
                 if (savedGames != null) return savedGames;
@@ -112,6 +115,7 @@ namespace Shared.GameManagement {
             if (CurrentSave.name != Temporary.name && File.Exists(Temporary.filePath) &&
                 !savedGames.Contains(CurrentSave)) savedGames.Add(CurrentSave);
         }
+
         /// <summary>
         /// Loads game state from file, creates map, blocks and places player at saved position
         /// </summary>
@@ -122,12 +126,15 @@ namespace Shared.GameManagement {
                 Save();
                 Cleanup();
             }
+
             CurrentSave = saveFile;
 
             SceneManager.LoadScene(Instance.worldScene);
 
             onLoaded = () => {
                 Cursor.visible = false;
+                FindObjectOfType<BlockSelector>().gameObject.SetActive(true);
+
                 using (var reader = new BinaryReader(File.Open(saveFile.path, FileMode.Open))) {
                     var cx = reader.ReadInt32();
                     var cy = reader.ReadInt32();
@@ -179,6 +186,9 @@ namespace Shared.GameManagement {
                 onLoaded = null;
             };
         }
+
+        private static readonly Random SeedGenerator = new Random();
+
         /// <summary>
         /// Begins new game
         /// </summary>
@@ -189,6 +199,9 @@ namespace Shared.GameManagement {
 
             onLoaded = () => {
                 Cursor.visible = false;
+                FindObjectOfType<BlockSelector>().gameObject.SetActive(true);
+                Instance.seed = SeedGenerator.Next(1000, 100000);
+
                 Map.storage = new MapStorage<Map.BlockInfo>();
                 Map.zero = (Instance.seed, Instance.seed);
 
@@ -217,17 +230,19 @@ namespace Shared.GameManagement {
                 }
             };
         }
+
         /// <summary>
         /// Exits game
         /// </summary>
         public static void ExitGame() {
-            Save();
+            if (InGame) Save();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
          Application.Quit();
 #endif
         }
+
         /// <summary>
         /// Exits to main menu
         /// </summary>
@@ -235,10 +250,12 @@ namespace Shared.GameManagement {
             Save();
             Cleanup();
             Cursor.visible = true;
+            FindObjectOfType<BlockSelector>().gameObject.SetActive(false);
             SceneManager.LoadScene(Instance.mainMenuScene);
         }
 
         #region Private helper methods
+
         /// <summary>
         /// Cleanup all blocks
         /// </summary>
@@ -250,6 +267,7 @@ namespace Shared.GameManagement {
                 if (pos.y + y >= 0)
                     Block.DestroyChunk(pos + new WorldPosition.ChunkPosition(x, y, z));
         }
+
         /// <summary>
         /// Subscribes to <see cref="SceneManager.sceneLoaded"/> event
         /// </summary>
@@ -257,6 +275,7 @@ namespace Shared.GameManagement {
             base.Awake();
             SceneManager.sceneLoaded += (scene, mode) => onLoaded?.Invoke();
         }
+
         #endregion
     }
 }
