@@ -17,7 +17,7 @@ namespace Shared.Blocks {
 
         public BlockType BlockType {
             get => blockType;
-            set {
+            private set {
                 if (value == blockType) return;
 
                 blockType = value;
@@ -26,7 +26,7 @@ namespace Shared.Blocks {
         }
         public WorldPosition Position {
             get => position;
-            set {
+            private set {
                 if (position == value) return;
 
                 position = value;

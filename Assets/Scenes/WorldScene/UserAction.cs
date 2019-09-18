@@ -59,6 +59,7 @@ namespace Scenes.WorldScene {
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 Cursor.lockState = CursorLockMode.Confined;
                 MenuContainer.ActiveMenu = MenuContainer.MenuType.Pause;
+                Cursor.visible = true;
                 return;
             }
 
@@ -86,8 +87,7 @@ namespace Scenes.WorldScene {
 
                 if (notDestroying && buildPosition != Player.Position) {
                     previewCube.transform.position = (Vector3) buildPosition * Settings.GridUnitWidth;
-                    previewCube.renderer.material.color =
-                        BlockSelector.SelectedType.BlockData().material.color.SetAlpha(previewCube.opacity);
+                    previewCube.renderer.material.mainTexture = BlockSelector.SelectedType.BlockData().material.mainTexture;
                     previewCube.renderer.enabled = true;
                 }
 

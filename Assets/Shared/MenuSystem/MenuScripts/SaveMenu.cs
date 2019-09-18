@@ -91,6 +91,7 @@ namespace Shared.MenuSystem.MenuScripts {
             if (!string.IsNullOrEmpty(input.text)) Game.SetCurrentSaveName(input.text);
             Game.Save();
             Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
             MenuContainer.ActiveMenu = null;
         }
     }

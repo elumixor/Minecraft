@@ -35,10 +35,17 @@ namespace Shared.GameManagement {
         /// </summary>
         public static MapStorage<BlockInfo> storage = new MapStorage<BlockInfo>();
 
-        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int waterLevel = 10;
-        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int sandDepth = 2;
-        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int groundDepth = 3;
-        [SerializeField, Range(0, WorldPosition.ChunkSize)] private int groundUnderwaterDepth = 1;
+        [SerializeField, Range(0, WorldPosition.ChunkSize)]
+        private int waterLevel = 10;
+
+        [SerializeField, Range(0, WorldPosition.ChunkSize)]
+        private int sandDepth = 2;
+
+        [SerializeField, Range(0, WorldPosition.ChunkSize)]
+        private int groundDepth = 3;
+
+        [SerializeField, Range(0, WorldPosition.ChunkSize)]
+        private int groundUnderwaterDepth = 1;
 
         [SerializeField, Range(1, 5)] private int octaves = 2;
         [SerializeField, Range(0.0001f, 100f)] private float scale = 10f;
@@ -64,6 +71,7 @@ namespace Shared.GameManagement {
                     ? GenerateChunk(position)
                     : null;
         }
+
         /// <summary>
         /// Gets block type at position
         /// </summary>
@@ -72,6 +80,7 @@ namespace Shared.GameManagement {
         /// <returns>True if block exists, else false</returns>
         public static bool TryGetBlock(WorldPosition position, out BlockInfo blockType) =>
             storage.TryGetValue(position, out blockType);
+
         /// <summary>
         /// Sets specific block in map
         /// </summary>
@@ -102,6 +111,7 @@ namespace Shared.GameManagement {
 
             Debug.Assert(adjoining < 6, $"Created block had more 6 or more adjoining blocks");
         }
+
         /// <summary>
         /// Removes block in map
         /// </summary>
@@ -123,6 +133,7 @@ namespace Shared.GameManagement {
         }
 
         #region Private helper methods
+
         /// <summary>
         /// Generates new chunk at chunk position and saves it to <see cref="storage"/>
         /// </summary>
@@ -142,6 +153,7 @@ namespace Shared.GameManagement {
                     return storage[position] = new MapStorage<BlockInfo>.Chunk();
             }
         }
+
         /// <summary>
         /// Generates chunk of only rock blocks
         /// </summary>
@@ -163,6 +175,7 @@ namespace Shared.GameManagement {
 
             return rockChunk;
         }
+
         /// <summary>
         /// Generates <see cref="MapStorage{T}.Chunk"/> of <see cref="BlockType"/>s from height map
         /// </summary>
@@ -209,12 +222,34 @@ namespace Shared.GameManagement {
                     }
                 }
 
+                void SetGround(int from, int to) {
+                    var start = Math.Max(0, from);
+                    for (var y = start; y < to; y++) {
+                        column[y] = (y >= 2 * WorldPosition.ChunkSize / 3 ? BlockType.GroundHigh :
+                            y >= WorldPosition.ChunkSize / 3 ? BlockType.GroundMiddle : BlockType.GroundLow, 0);
+                        if (y > 0) {
+                            column[y - 1].adjustingCount++;
+                            column[y].adjustingCount++;
+                        }
+
+                        if (previousX != null && y < previousX.Length) {
+                            previousX[y].adjustingCount++;
+                            column[y].adjustingCount++;
+                        }
+
+                        if (previousZ != null && y < previousZ.Length) {
+                            previousZ[y].adjustingCount++;
+                            column[y].adjustingCount++;
+                        }
+                    }
+                }
+
                 if (height > waterLevel + groundDepth) {
                     Set(BlockType.Rock, 0, height - groundDepth);
-                    Set(BlockType.Ground, height - groundDepth, height);
+                    SetGround(height - groundDepth, height);
                 } else if (height > waterLevel + sandDepth) {
                     Set(BlockType.Rock, 0, waterLevel - groundUnderwaterDepth);
-                    Set(BlockType.Ground, waterLevel - groundUnderwaterDepth, waterLevel + groundDepth);
+                    SetGround(waterLevel - groundUnderwaterDepth, waterLevel + groundDepth);
                 } else if (height > waterLevel) {
                     Set(BlockType.Rock, 0, waterLevel - sandDepth);
                     Set(BlockType.Sand, waterLevel - sandDepth, height - sandDepth);
@@ -239,6 +274,7 @@ namespace Shared.GameManagement {
 
             return chunk;
         }
+
         /// <summary>
         /// Generates height map using perlin noise algorithm
         /// </summary>
@@ -281,6 +317,7 @@ namespace Shared.GameManagement {
 
             return points;
         }
+
         #endregion
     }
 }

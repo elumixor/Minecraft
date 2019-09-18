@@ -127,6 +127,7 @@ namespace Shared.GameManagement {
             SceneManager.LoadScene(Instance.worldScene);
 
             onLoaded = () => {
+                Cursor.visible = false;
                 using (var reader = new BinaryReader(File.Open(saveFile.path, FileMode.Open))) {
                     var cx = reader.ReadInt32();
                     var cy = reader.ReadInt32();
@@ -187,6 +188,7 @@ namespace Shared.GameManagement {
             CurrentSave = Temporary;
 
             onLoaded = () => {
+                Cursor.visible = false;
                 Map.storage = new MapStorage<Map.BlockInfo>();
                 Map.zero = (Instance.seed, Instance.seed);
 
@@ -232,6 +234,7 @@ namespace Shared.GameManagement {
         public static void ExitToMenu() {
             Save();
             Cleanup();
+            Cursor.visible = true;
             SceneManager.LoadScene(Instance.mainMenuScene);
         }
 

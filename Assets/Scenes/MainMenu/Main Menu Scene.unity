@@ -337,12 +337,25 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 767940896}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6936777896374d9c8c8b11ff3b94f6ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockDataContainer: {fileID: 11400000, guid: b98f98c3e565e2f418dd4c79340c72ca, type: 2}
+  blockData:
+  - material: {fileID: 2100000, guid: c7f075d73f0b847f09c44574217af24a, type: 2}
+    durability: 0.5
+  - material: {fileID: 2100000, guid: 902e81e9b80144a19820e16da9880bc7, type: 2}
+    durability: 0.5
+  - material: {fileID: 2100000, guid: ed992830238724684a00b9b2c3711a42, type: 2}
+    durability: 0.5
+  - material: {fileID: 2100000, guid: 15592b37010034c0eaf0e619bdbd7230, type: 2}
+    durability: 1.5
+  - material: {fileID: 2100000, guid: 27afa40d9b4674470be1920437aa4d19, type: 2}
+    durability: 0.2
+  - material: {fileID: 2100000, guid: 8b23c03f93b22462bbe02d0b73a0f4d8, type: 2}
+    durability: 0.4
+  playerConstructable: 01000000030000000400000005000000
   gridUnitWidth: 1
 --- !u!4 &767940898
 Transform:

@@ -7,7 +7,6 @@ namespace Scenes.WorldScene.BlockSelection.Button {
     [RequireComponent(typeof(Image))]
     public class BlockSelectionButton : MonoBehaviour, IPointerClickHandler {
        [SerializeField] private BlockType blockType;
-
        public void OnPointerClick(PointerEventData eventData) => BlockSelector.SelectedType = blockType;
     }
 }

@@ -39,6 +39,7 @@ namespace Shared.MenuSystem.MenuScripts {
         private void Update() {
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 MenuContainer.ActiveMenu = null;
             }
         }

@@ -2,7 +2,9 @@ using Shared.GameManagement;
 
 namespace Shared.Blocks {
     public enum BlockType {
-        Ground,
+        GroundLow,
+        GroundMiddle,
+        GroundHigh,
         Rock,
         Water,
         Sand
@@ -10,6 +12,6 @@ namespace Shared.Blocks {
     }
 
     public static class BlockTypeExtensions {
-        public static BlockData BlockData(this BlockType blockType) => Settings.BlockDataContainer[blockType];
+        public static BlockData BlockData(this BlockType blockType) => Settings.GetBlockData(blockType);
     }
 }
