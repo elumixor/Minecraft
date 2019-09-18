@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 namespace Scenes.WorldScene.BlockSelection.Button {
     [RequireComponent(typeof(Image))]
-    public class BlockSelectionButton : MonoBehaviour, IPointerClickHandler {
+    public class BlockSelectionButton : MonoBehaviour {
        [SerializeField] private BlockType blockType;
-       public void OnPointerClick(PointerEventData eventData) => BlockSelector.SelectedType = blockType;
+//       public void OnPointerClick(PointerEventData eventData) => BlockSelector.SelectedType = blockType;
     }
 }
