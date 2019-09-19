@@ -1,6 +1,6 @@
 # Minecraft
 
-This is a simple game, developed in Unity both as a test task and for educational purposes.
+A Simplified clone of [Minecraft](https://www.minecraft.net/), developed in Unity both as a test task and for educational purposes.
 
 ### Download for
  - [Windows](https://drive.google.com/file/d/1urul552zlGYbY_6cNomTP5ysdrwwXXdP/view?usp=sharing)
